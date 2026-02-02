@@ -4,11 +4,27 @@
 
 A modern, event-sourced case management application built with Angular and NX monorepo architecture.
 
+## 🛠️ Tech Stack
+
+| Category | Technology | Version |
+|----------|------------|---------|
+| **Frontend** | Angular | 21.1 |
+| **UI Components** | Angular Material | 21.1 |
+| **Styling** | Tailwind CSS | 3.4 |
+| **Monorepo** | NX | 22.4 |
+| **Language** | TypeScript | 5.9 |
+| **Testing** | Vitest | 4.0 |
+| **E2E Testing** | Playwright | 1.36 |
+| **Linting** | ESLint | 9.8 |
+| **State** | RxJS | 7.8 |
+| **Build** | esbuild (via Angular) | - |
+
 ## 🏗️ Architecture
 
 - **Event Sourcing**: All state changes are immutable events, enabling full audit trails and time-travel debugging
 - **RBAC Permissions**: Role-based access control with compile-time checked permission matrix
 - **NX Monorepo**: Scalable workspace with shared libraries
+- **Pure Reducers**: Deterministic state computation from events
 
 ## 📦 Project Structure
 

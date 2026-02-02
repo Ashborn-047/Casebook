@@ -113,7 +113,7 @@ export interface TimelineEntry {
     readonly occurredAt: string;
     readonly icon: string;          // Material icon name
     readonly colorClass: string;    // Tailwind color class
-    readonly payload: any;          // Original event payload
+    readonly payload: Record<string, unknown>;          // Original event payload
     readonly isVisibleTo: UserRole[]; // Which roles can see this
     readonly metadata?: {
         isCorrection?: boolean;

@@ -1,0 +1,102 @@
+// Tailwind directives
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+// Global CSS Variables
+:root {
+  // Color Palette
+  --color-brutal-primary: #FF6B6B;
+  --color-brutal-secondary: #4ECDC4;
+  --color-brutal-accent: #FFE66D;
+  --color-brutal-dark: #2D3047;
+  --color-brutal-light: #F7F7F7;
+  
+  // Glassmorphism
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.2);
+  --glass-blur: blur(10px);
+  
+  // Brutalism
+  --brutal-border: 4px solid #000;
+  --brutal-shadow: 8px 8px 0px #000;
+  
+  // Spacing
+  --space-unit: 8px;
+  --radius-base: 12px;
+  --radius-brutal: 0px;
+}
+
+// Base Styles
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  @apply bg-brutal-light text-brutal-dark;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// Utility Classes
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  border: var(--glass-border);
+  border-radius: var(--radius-base);
+  box-shadow: var(--glass-shadow);
+}
+
+.brutal-card {
+  border: var(--brutal-border);
+  border-radius: var(--radius-brutal);
+  box-shadow: var(--brutal-shadow);
+  background: white;
+}
+
+.brutal-button {
+  @apply font-bold px-6 py-3 transition-all duration-100;
+  border: var(--brutal-border);
+  box-shadow: var(--brutal-shadow);
+  
+  &:active {
+    transform: translate(4px, 4px);
+    box-shadow: 4px 4px 0px #000;
+  }
+  
+  &:disabled {
+    @apply opacity-50 cursor-not-allowed;
+    transform: none !important;
+    box-shadow: var(--brutal-shadow) !important;
+  }
+}
+
+// Role-specific colors
+.role-viewer { border-left: 4px solid #4ECDC4; }
+.role-investigator { border-left: 4px solid #FFE66D; }
+.role-supervisor { border-left: 4px solid #FF6B6D; }
+
+// Event type indicators
+.event-case { border-left: 4px solid #FFE66D; }
+.event-evidence { border-left: 4px solid #4ECDC4; }
+.event-note { border-left: 4px solid #A78BFA; }
+
+// Custom scrollbar
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-brutal-primary rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-red-500;
+}

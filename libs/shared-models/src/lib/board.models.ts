@@ -3,7 +3,7 @@
  * Models for the interactive investigation board
  */
 
-import { Evidence, Hypothesis, Note, InvestigationConnection } from './domain.models';
+
 
 // ===== BOARD NODE TYPES =====
 export type BoardNodeType = 'evidence' | 'hypothesis' | 'note' | 'case';
@@ -170,7 +170,7 @@ export function createBoardConnection(
     targetNodeId: string,
     connectionId: string,
     type: string,
-    strength: number = 2
+    strength = 2
 ): BoardConnection {
     return {
         id: `board-conn-${crypto.randomUUID()}`,
@@ -243,13 +243,14 @@ export function calculateConnectionPath(
         case 'straight':
             return [sourcePos, targetPos];
 
-        case 'bezier':
+        case 'bezier': {
             const midX = (sourcePos.x + targetPos.x) / 2;
             const control1 = { x: midX, y: sourcePos.y - 50 };
             const control2 = { x: midX, y: targetPos.y + 50 };
             return [sourcePos, control1, control2, targetPos];
+        }
 
-        case 'orthogonal':
+        case 'orthogonal': {
             const midY = (sourcePos.y + targetPos.y) / 2;
             return [
                 sourcePos,
@@ -259,6 +260,7 @@ export function calculateConnectionPath(
                 { x: targetPos.x - 50, y: targetPos.y },
                 targetPos,
             ];
+        }
 
         default:
             return [sourcePos, targetPos];

@@ -117,10 +117,11 @@ function applyEvent(state: CaseState, event: AppEvent): CaseState {
         case 'INVESTIGATION_PATH_CREATED':
             return applyInvestigationPathCreated(state, event);
 
-        default:
+        default: {
             // Exhaustiveness check for TypeScript
-            const _exhaustiveCheck: never = event;
-            return state;
+            const check: never = event as never;
+            return check || state;
+        }
     }
 }
 

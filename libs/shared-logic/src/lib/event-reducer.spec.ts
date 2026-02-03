@@ -1,6 +1,5 @@
 import { reduceEvents, getStateAtTime, replayEvents, validateEventSequence } from './event-reducer';
 import {
-    AppEvent,
     CaseCreatedEvent,
     CaseAssignedEvent,
     CaseClosedEvent,
@@ -263,7 +262,7 @@ describe('Event Reducer', () => {
             expect(state.evidence[0].id).toBe('ev-1-v2');
             expect(state.evidence[0].version).toBe(2);
             expect(state.evidence[0].corrections).toHaveLength(1);
-            expect(state.evidence[0].corrections![0].reason).toBe('Typo correction');
+            expect(state.evidence[0].corrections?.[0].reason).toBe('Typo correction');
         });
     });
 

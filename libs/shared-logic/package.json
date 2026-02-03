@@ -2,8 +2,8 @@
   "name": "@casbook/shared-logic",
   "version": "0.0.1",
   "peerDependencies": {
-    "@angular/common": "^21.1.0",
-    "@angular/core": "^21.1.0"
+    "@angular/core": "^21.1.0",
+    "@casbook/shared-models": "*"
   },
   "sideEffects": false
 }

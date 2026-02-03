@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { NxWelcome } from './nx-welcome';
+import { EventSyncService } from './core/sync/event-sync.service';
 
 @Component({
   imports: [NxWelcome, RouterModule],
@@ -8,6 +9,11 @@ import { NxWelcome } from './nx-welcome';
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
-export class App {
+export class App implements OnInit {
   protected title = 'frontend';
+  private syncService = inject(EventSyncService);
+
+  ngOnInit(): void {
+    this.syncService.initialize();
+  }
 }

@@ -1,0 +1,69 @@
+<div class="evidence-upload-overlay" (click)="cancel()">
+    <cb-glass-card additionalClasses="upload-card" (click)="$event.stopPropagation()">
+        <div class="header">
+            <h2>Add New Evidence</h2>
+            <p>Secure forensic upload with SHA-256 integrity check.</p>
+        </div>
+
+        <div class="form-section">
+            <label>Evidence Type</label>
+            <div class="type-selector">
+                <button [class.active]="type() === 'text'" (click)="type.set('text')">TXT</button>
+                <button [class.active]="type() === 'file'" (click)="type.set('file')">FILE</button>
+                <button [class.active]="type() === 'url'" (click)="type.set('url')">URL</button>
+            </div>
+
+            <div class="input-content" [ngSwitch]="type()">
+                <div *ngSwitchCase="'text'">
+                    <label>Content</label>
+                    <textarea [(ngModel)]="content" placeholder="Enter evidence textual content..."></textarea>
+                </div>
+
+                <div *ngSwitchCase="'file'">
+                    <label>Select File</label>
+                    <div class="file-drop-zone">
+                        <input type="file" (change)="onFileSelected($event)" id="fileInput">
+                        <label for="fileInput" class="file-label">
+                            <span class="material-icons">cloud_upload</span>
+                            {{ selectedFile() ? selectedFile()?.name : 'Click to browse or drag file' }}
+                        </label>
+                    </div>
+                </div>
+
+                <div *ngSwitchCase="'url'">
+                    <label>Source URL</label>
+                    <input type="url" [(ngModel)]="content" placeholder="https://...">
+                </div>
+            </div>
+
+            <div class="meta-inputs">
+                <label>Forensic Description</label>
+                <input type="text" [(ngModel)]="description" placeholder="Short summary of this evidence...">
+
+                <label>Access Level</label>
+                <select [(ngModel)]="visibility">
+                    <option value="normal">Normal</option>
+                    <option value="restricted">Restricted (Supervisor Only)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="integrity-panel" *ngIf="computedHash() || isHashing()">
+            <div class="hash-status" [class.loading]="isHashing()">
+                <span class="material-icons">{{ isHashing() ? 'autorenew' : 'verified_user' }}</span>
+                <div class="hash-details">
+                    <strong>SHA-256 Fingerprint</strong>
+                    <code>{{ isHashing() ? 'Calculating hash...' : computedHash() }}</code>
+                </div>
+            </div>
+        </div>
+
+        <div class="actions">
+            <cb-brutal-button (clicked)="cancel()" variant="ghost">Cancel</cb-brutal-button>
+            <cb-brutal-button (clicked)="submit()" variant="primary"
+                [disabled]="isHashing() || isSubmitting() || !content() || !description()">
+                {{ isSubmitting() ? 'Securing...' : 'Verify & Add' }}
+            </cb-brutal-button>
+        </div>
+    </cb-glass-card>
+</div>

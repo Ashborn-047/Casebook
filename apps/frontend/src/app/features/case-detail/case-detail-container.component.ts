@@ -12,6 +12,11 @@ import {
 import { UserRole } from '@casbook/shared-models';
 import { InvestigationBoardComponent } from './investigation-board/investigation-board.component';
 import { BoardToolbarComponent } from './board-tools/board-toolbar.component';
+import { EvidenceUploadComponent } from './evidence-upload/evidence-upload.component';
+import { TimeTravelDebuggerComponent } from '../time-travel/time-travel-debugger.component';
+import { TimeTravelStore } from '../time-travel/time-travel.store';
+import { JsonExportService } from '@casbook/shared-utils';
+import { PdfExportService } from '@casbook/shared-utils';
 
 @Component({
   selector: 'app-case-detail-container',
@@ -24,7 +29,9 @@ import { BoardToolbarComponent } from './board-tools/board-toolbar.component';
     RoleBadgeComponent,
     TimelineItemComponent,
     InvestigationBoardComponent,
-    BoardToolbarComponent
+    BoardToolbarComponent,
+    EvidenceUploadComponent,
+    TimeTravelDebuggerComponent
   ],
   template: `
     <div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
@@ -55,6 +62,24 @@ import { BoardToolbarComponent } from './board-tools/board-toolbar.component';
             </cb-brutal-button>
             
             <cb-role-badge [role]="effectiveRole()"></cb-role-badge>
+            
+            <!-- Audit Export Buttons -->
+            <div class="flex items-center gap-2 border-l-2 border-brutal-dark pl-3 ml-2">
+              <cb-brutal-button 
+                variant="ghost" 
+                size="sm" 
+                icon="📄" 
+                (clicked)="exportJson()" 
+                title="Export JSON Audit"
+              ></cb-brutal-button>
+              <cb-brutal-button 
+                variant="ghost" 
+                size="sm" 
+                icon="📕" 
+                (clicked)="exportPdf()" 
+                title="Export PDF Report"
+              ></cb-brutal-button>
+            </div>
             
             <!-- Role Switcher -->
             <select 
@@ -91,7 +116,33 @@ import { BoardToolbarComponent } from './board-tools/board-toolbar.component';
           >
             Investigation Board
           </cb-brutal-button>
+
+          <cb-brutal-button 
+            (clicked)="showTimeTravel.set(!showTimeTravel())"
+            [variant]="showTimeTravel() ? 'primary' : 'ghost'"
+            size="sm"
+            icon="⏳"
+            [disabled]="!canTimeTravel"
+          >
+            Time Travel Replay
+          </cb-brutal-button>
         </div>
+        
+        <div class="flex items-center" *ngIf="canAddEvidence">
+          <cb-brutal-button 
+            variant="primary" 
+            size="sm" 
+            icon="+" 
+            (clicked)="showUpload.set(true)"
+          >
+            Add Evidence
+          </cb-brutal-button>
+        </div>
+      </div>
+
+      <!-- Time Travel Debugger UI overlay or inline -->
+      <div *ngIf="showTimeTravel()" class="max-w-6xl mx-auto mb-6">
+        <cb-time-travel-debugger></cb-time-travel-debugger>
       </div>
 
       <!-- Loading State -->
@@ -274,6 +325,14 @@ import { BoardToolbarComponent } from './board-tools/board-toolbar.component';
           </div>
         </div>
       </div>
+
+      <!-- Evidence Upload Overlay -->
+      <cb-evidence-upload 
+        *ngIf="showUpload()" 
+        [caseId]="currentCase()?.id || ''"
+        (completed)="showUpload.set(false)"
+        (cancelled)="showUpload.set(false)"
+      ></cb-evidence-upload>
     </div>
   `,
   styles: [`
@@ -390,6 +449,12 @@ export class CaseDetailContainerComponent {
 
   viewMode = signal<'timeline' | 'board'>('timeline');
   showInstructions = signal(false);
+  showUpload = signal(false);
+  showTimeTravel = signal(false);
+
+  private jsonExportService = inject(JsonExportService);
+  private pdfExportService = inject(PdfExportService);
+  private timeTravelStore = inject(TimeTravelStore);
 
   currentCase = this.store.currentCase;
   timeline = this.store.timeline;
@@ -420,6 +485,7 @@ export class CaseDetailContainerComponent {
   get canCreateHypotheses(): boolean { return this.currentCase()?.permissions?.canCreateHypotheses || false; }
   get canCloseCase(): boolean { return this.currentCase()?.permissions?.canCloseCase || false; }
   get canUpdateLayout(): boolean { return this.currentCase()?.permissions?.canUpdateLayout || false; }
+  get canTimeTravel(): boolean { return this.currentCase()?.permissions?.canTimeTravel || false; }
 
   setViewMode(mode: 'timeline' | 'board'): void {
     if (mode === 'board' && !this.canViewBoard) {
@@ -447,5 +513,30 @@ export class CaseDetailContainerComponent {
 
   dismissBoardInstructions(): void {
     this.showInstructions.set(false);
+  }
+
+  exportJson(): void {
+    const caseId = this.currentCase()?.id;
+    if (!caseId) return;
+
+    const result = this.jsonExportService.export(caseId, this.store.currentCaseEvents());
+    this.downloadResult(result as { blob: Blob; filename: string });
+  }
+
+  exportPdf(): void {
+    const caseId = this.currentCase()?.id;
+    if (!caseId) return;
+
+    const result = this.pdfExportService.export(caseId, this.store.currentCaseEvents());
+    this.downloadResult(result as { blob: Blob; filename: string });
+  }
+
+  private downloadResult(result: { blob: Blob; filename: string }): void {
+    const url = window.URL.createObjectURL(result.blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = result.filename;
+    link.click();
+    window.URL.revokeObjectURL(url);
   }
 }

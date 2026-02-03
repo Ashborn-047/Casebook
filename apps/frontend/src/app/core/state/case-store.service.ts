@@ -98,18 +98,20 @@ export class CaseStore {
         return this.cases()[caseId] || null;
     });
 
-    readonly timeline = computed(() => {
+    readonly currentCaseEvents = computed(() => {
         const caseId = this.uiState().currentCaseId;
         if (!caseId) return [];
 
-        const caseEvents = this.events().filter(event =>
-            'caseId' in event.payload && (event.payload as { caseId: string }).caseId === caseId
-        );
+        return this.events()
+            .filter(event => 'caseId' in event.payload && (event.payload as { caseId: string }).caseId === caseId)
+            .sort((a, b) => new Date(a.occurredAt).getTime() - new Date(b.occurredAt).getTime());
+    });
 
+    readonly timeline = computed(() => {
+        const caseEvents = this.currentCaseEvents();
         const effectiveRole = this.uiState().roleOverride || this.currentUser().role;
 
         return caseEvents
-            .sort((a, b) => new Date(a.occurredAt).getTime() - new Date(b.occurredAt).getTime())
             .map(event => this.eventToTimelineEntry(event, effectiveRole))
             .filter(entry => entry.isVisibleTo.includes(effectiveRole));
     });
@@ -293,6 +295,37 @@ export class CaseStore {
             return { success: true, caseId };
         }
         return { success: false, error: result.error };
+    }
+
+    async addEvidence(
+        caseId: string,
+        type: 'file' | 'text' | 'url',
+        content: string,
+        hash: string,
+        description: string,
+        visibility: 'normal' | 'restricted' = 'normal',
+        tags: string[] = []
+    ): Promise<{ success: boolean; error?: string }> {
+        const evidenceId = `ev-${crypto.randomUUID().split('-')[0]}`;
+
+        const event = {
+            type: 'EVIDENCE_ADDED' as const,
+            actorId: this.currentUser().id,
+            actorRole: this.currentUser().role,
+            payload: {
+                evidenceId,
+                caseId,
+                type,
+                content,
+                hash,
+                description,
+                submittedBy: this.currentUser().id,
+                visibility,
+                tags,
+            },
+        };
+
+        return this.addEvent(event);
     }
 
     private computePermissions(role: UserRole, caseState: CaseState): CaseState['permissions'] {

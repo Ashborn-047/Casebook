@@ -1,0 +1,51 @@
+<div class="time-travel-container glass-morphism">
+    <div class="header">
+        <div class="title-section">
+            <h3>Time Travel Debugger</h3>
+            <span class="viewing-info">{{ viewingInfo() }}</span>
+        </div>
+        <div class="status-badge" [class.playing]="isPlaying()">
+            {{ isPlaying() ? 'LIVE REPLAY' : 'PAUSED' }}
+        </div>
+    </div>
+
+    <div class="timeline-controls">
+        <div class="slider-wrapper">
+            <input type="range" [min]="-1" [max]="totalEvents() - 1" [value]="currentEventIndex()"
+                (input)="onSliderChange($event)" class="timeline-slider">
+            <div class="slider-ticks">
+                <span *ngFor="let i of [].constructor(totalEvents()); let index = index" class="tick"
+                    [class.active]="index <= currentEventIndex()">
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="playback-actions">
+        <button (click)="reset()" class="btn-icon" title="Reset to start">
+            <span class="material-icons">first_page</span>
+        </button>
+        <button (click)="stepBackward()" class="btn-icon" [disabled]="isAtStart()" title="Step back">
+            <span class="material-icons">chevron_left</span>
+        </button>
+
+        <button (click)="togglePlay()" class="btn-play" [class.active]="isPlaying()">
+            <span class="material-icons">{{ isPlaying() ? 'pause' : 'play_arrow' }}</span>
+            <span>{{ isPlaying() ? 'Pause' : 'Play' }}</span>
+        </button>
+
+        <button (click)="stepForward()" class="btn-icon" [disabled]="isAtEnd()" title="Step forward">
+            <span class="material-icons">chevron_right</span>
+        </button>
+    </div>
+
+    <div class="current-event-card" *ngIf="currentEvent() as event">
+        <div class="event-type-badge" [ngClass]="getEventTypeClass(event.type)">
+            {{ event.type }}
+        </div>
+        <div class="event-meta">
+            <span class="actor">{{ event.actorId }} ({{ event.actorRole }})</span>
+            <span class="time">{{ event.occurredAt | date:'mediumTime' }}</span>
+        </div>
+    </div>
+</div>

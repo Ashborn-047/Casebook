@@ -1,9 +1,12 @@
 /**
- * DOMAIN MODELS - Derived State
+ * DOMAIN MODELS - Derived State with Mind Palace
  * These are computed from events, never stored directly
  */
 
-import { UserRole, EvidenceType, EvidenceVisibility, CaseStatus } from './event.models';
+import {
+    UserRole, EvidenceType, EvidenceVisibility, CaseStatus,
+    ConnectionType, ConnectionStrength, HypothesisStatus
+} from './event.models';
 
 // ===== CORE ENTITIES =====
 
@@ -49,6 +52,102 @@ export interface Note {
     readonly tags: string[];
 }
 
+// ===== MIND PALACE ENTITIES =====
+
+export interface InvestigationConnection {
+    readonly id: string;
+    readonly caseId: string;
+    readonly sourceEvidenceId: string;
+    readonly targetEvidenceId: string;
+    readonly connectionType: ConnectionType;
+    readonly reason: string;
+    readonly strength: ConnectionStrength;
+    readonly createdBy: string;
+    readonly createdAt: string;
+    readonly notes?: string;
+    readonly metadata?: {
+        color?: string;
+        lineStyle?: 'solid' | 'dashed' | 'dotted';
+        isActive?: boolean;
+    };
+}
+
+export interface Hypothesis {
+    readonly id: string;
+    readonly caseId: string;
+    readonly title: string;
+    readonly description: string;
+    readonly supportingEvidenceIds: string[];
+    readonly confidence: 'low' | 'medium' | 'high';
+    readonly status: HypothesisStatus;
+    readonly createdBy: string;
+    readonly createdAt: string;
+    readonly updatedAt: string;
+    readonly resolvedAt?: string;
+    readonly resolution?: 'proven' | 'disproven';
+    readonly conclusion?: string;
+    readonly metadata?: {
+        color: string;
+        position?: { x: number; y: number };
+        size?: { width: number; height: number };
+    };
+}
+
+export interface InvestigationPath {
+    readonly id: string;
+    readonly caseId: string;
+    readonly title: string;
+    readonly description: string;
+    readonly sequence: string[];
+    readonly summary: string;
+    readonly createdBy: string;
+    readonly createdAt: string;
+    readonly confidence?: 'low' | 'medium' | 'high';
+}
+
+export interface VisualLayout {
+    readonly caseId: string;
+    readonly nodePositions: Record<string, { x: number; y: number }>;
+    readonly hypothesisPositions: Record<string, { x: number; y: number }>;
+    readonly canvasView: {
+        zoom: number;
+        panX: number;
+        panY: number;
+        lastUpdated: string;
+    };
+}
+
+// ===== BOARD UI MODELS =====
+
+export interface BoardNode {
+    readonly id: string;
+    readonly type: 'evidence' | 'hypothesis' | 'note';
+    readonly x: number;
+    readonly y: number;
+    readonly width: number;
+    readonly height: number;
+    readonly data: Evidence | Hypothesis | Note;
+}
+
+export interface BoardConnection {
+    readonly id: string;
+    readonly sourceId: string;
+    readonly targetId: string;
+    readonly connectionType: ConnectionType;
+    readonly strength: ConnectionStrength;
+    readonly color: string;
+    readonly lineStyle: 'solid' | 'dashed' | 'dotted';
+}
+
+export interface BoardState {
+    readonly nodes: BoardNode[];
+    readonly connections: BoardConnection[];
+    readonly selectedNodeId: string | null;
+    readonly zoom: number;
+    readonly panX: number;
+    readonly panY: number;
+}
+
 // ===== CASE STATE (Derived from events) =====
 
 export interface CaseState {
@@ -74,13 +173,21 @@ export interface CaseState {
     readonly evidence: Evidence[];
     readonly notes: Note[];
     readonly tags: string[];
-    readonly eventIds: string[];  // Event IDs in chronological order
+    readonly eventIds: string[];
+
+    // ===== MIND PALACE COLLECTIONS =====
+    readonly connections: InvestigationConnection[];
+    readonly hypotheses: Hypothesis[];
+    readonly investigationPaths: InvestigationPath[];
+    readonly visualLayout?: VisualLayout;
 
     // Computed metrics
     readonly evidenceCount: number;
     readonly restrictedEvidenceCount: number;
     readonly noteCount: number;
     readonly internalNoteCount: number;
+    readonly connectionCount: number;
+    readonly activeHypothesisCount: number;
     readonly lastActivityAt: string;
     readonly daysOpen: number;
 
@@ -96,6 +203,12 @@ export interface CaseState {
         readonly canCorrectEvidence: boolean;
         readonly canExportCase: boolean;
         readonly canTimeTravel: boolean;
+        // ===== MIND PALACE PERMISSIONS =====
+        readonly canCreateConnections: boolean;
+        readonly canCreateHypotheses: boolean;
+        readonly canUpdateLayout: boolean;
+        readonly canCreateInvestigationPaths: boolean;
+        readonly canViewBoard: boolean;
     };
 }
 
@@ -111,14 +224,15 @@ export interface TimelineEntry {
     readonly actorRole: UserRole;
     readonly actorName?: string;
     readonly occurredAt: string;
-    readonly icon: string;          // Material icon name
-    readonly colorClass: string;    // Tailwind color class
-    readonly payload: Record<string, unknown>;          // Original event payload
-    readonly isVisibleTo: UserRole[]; // Which roles can see this
+    readonly icon: string;
+    readonly colorClass: string;
+    readonly payload: Record<string, unknown>;
+    readonly isVisibleTo: UserRole[];
     readonly metadata?: {
         isCorrection?: boolean;
         isRestricted?: boolean;
         isInternal?: boolean;
+        isMindPalace?: boolean;
     };
 }
 
@@ -130,6 +244,8 @@ export interface CaseSummary {
     readonly severity: string;
     readonly assignedInvestigator: string | null;
     readonly evidenceCount: number;
+    readonly connectionCount: number;
+    readonly hypothesisCount: number;
     readonly lastActivityAt: string;
     readonly createdAt: string;
     readonly tags: string[];
@@ -143,7 +259,7 @@ export interface AppState {
     readonly currentCaseId: string | null;
     readonly currentUserId: string;
     readonly currentUserRole: UserRole;
-    readonly viewMode: 'timeline' | 'evidence' | 'notes' | 'audit';
+    readonly viewMode: 'timeline' | 'evidence' | 'notes' | 'audit' | 'board';
     readonly selectedTimelineDate: string | null;
     readonly isLoading: boolean;
     readonly error: string | null;
@@ -166,10 +282,18 @@ export const INITIAL_CASE_STATE: Omit<CaseState, 'id' | 'createdAt'> = {
     notes: [],
     tags: [],
     eventIds: [],
+    // ===== MIND PALACE INITIAL =====
+    connections: [],
+    hypotheses: [],
+    investigationPaths: [],
+    visualLayout: undefined,
+
     evidenceCount: 0,
     restrictedEvidenceCount: 0,
     noteCount: 0,
     internalNoteCount: 0,
+    connectionCount: 0,
+    activeHypothesisCount: 0,
     lastActivityAt: '',
     daysOpen: 0,
     permissions: {
@@ -183,6 +307,12 @@ export const INITIAL_CASE_STATE: Omit<CaseState, 'id' | 'createdAt'> = {
         canCorrectEvidence: false,
         canExportCase: false,
         canTimeTravel: false,
+        // ===== MIND PALACE PERMISSIONS =====
+        canCreateConnections: false,
+        canCreateHypotheses: false,
+        canUpdateLayout: false,
+        canCreateInvestigationPaths: false,
+        canViewBoard: false,
     },
 };
 

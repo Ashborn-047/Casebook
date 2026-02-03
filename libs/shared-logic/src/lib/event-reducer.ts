@@ -1,5 +1,5 @@
 /**
- * PURE EVENT REDUCER
+ * PURE EVENT REDUCER with Mind Palace
  * Deterministic function that computes state from events
  * NO side effects, NO dependencies, NO mutations
  */
@@ -9,13 +9,25 @@ import {
     CaseCreatedEvent,
     EvidenceAddedEvent,
     NoteAddedEvent,
+    EvidenceConnectedEvent,
+    EvidenceDisconnectedEvent,
+    HypothesisCreatedEvent,
+    HypothesisUpdatedEvent,
+    HypothesisResolvedEvent,
+    VisualLayoutUpdatedEvent,
+    InvestigationPathCreatedEvent,
     CaseStatus,
-    EvidenceVisibility
+    ConnectionType,
+    ConnectionStrength
 } from '@casbook/shared-models';
 import {
     CaseState,
     Evidence,
     Note,
+    InvestigationConnection,
+    Hypothesis,
+    InvestigationPath,
+    VisualLayout,
     INITIAL_CASE_STATE
 } from '@casbook/shared-models';
 
@@ -73,6 +85,28 @@ function applyEvent(state: CaseState, event: AppEvent): CaseState {
 
         case 'NOTE_ADDED':
             return applyNoteAdded(state, event);
+
+        // ===== MIND PALACE EVENTS =====
+        case 'EVIDENCE_CONNECTED':
+            return applyEvidenceConnected(state, event);
+
+        case 'EVIDENCE_DISCONNECTED':
+            return applyEvidenceDisconnected(state, event);
+
+        case 'HYPOTHESIS_CREATED':
+            return applyHypothesisCreated(state, event);
+
+        case 'HYPOTHESIS_UPDATED':
+            return applyHypothesisUpdated(state, event);
+
+        case 'HYPOTHESIS_RESOLVED':
+            return applyHypothesisResolved(state, event);
+
+        case 'VISUAL_LAYOUT_UPDATED':
+            return applyVisualLayoutUpdated(state, event);
+
+        case 'INVESTIGATION_PATH_CREATED':
+            return applyInvestigationPathCreated(state, event);
 
         default:
             // Exhaustiveness check for TypeScript
@@ -171,7 +205,6 @@ function applyEvidenceAdded(state: CaseState, event: EvidenceAddedEvent): CaseSt
 function applyEvidenceCorrected(state: CaseState, event: AppEvent): CaseState {
     if (event.type !== 'EVIDENCE_CORRECTED') return state;
 
-    // Find the evidence being corrected
     const evidenceIndex = state.evidence.findIndex(
         e => e.id === event.payload.originalEvidenceId
     );
@@ -194,7 +227,6 @@ function applyEvidenceCorrected(state: CaseState, event: AppEvent): CaseState {
         ],
     };
 
-    // Replace old evidence with corrected version
     const newEvidence = [...state.evidence];
     newEvidence[evidenceIndex] = correctedEvidence;
 
@@ -225,7 +257,6 @@ function applyEvidenceVisibilityChanged(state: CaseState, event: AppEvent): Case
     const newEvidence = [...state.evidence];
     newEvidence[evidenceIndex] = updatedEvidence;
 
-    // Update restricted count
     let restrictedCount = state.restrictedEvidenceCount;
     if (event.payload.oldVisibility === 'restricted' && event.payload.newVisibility === 'normal') {
         restrictedCount--;
@@ -269,6 +300,230 @@ function applyNoteAdded(state: CaseState, event: NoteAddedEvent): CaseState {
     };
 }
 
+// ===== MIND PALACE EVENT APPLIERS =====
+
+function applyEvidenceConnected(state: CaseState, event: EvidenceConnectedEvent): CaseState {
+    const connection: InvestigationConnection = {
+        id: event.payload.connectionId,
+        caseId: event.payload.caseId,
+        sourceEvidenceId: event.payload.sourceEvidenceId,
+        targetEvidenceId: event.payload.targetEvidenceId,
+        connectionType: event.payload.connectionType,
+        reason: event.payload.reason,
+        strength: event.payload.strength,
+        createdBy: event.actorId,
+        createdAt: event.occurredAt,
+        notes: event.payload.notes,
+        metadata: {
+            color: getConnectionColor(event.payload.connectionType),
+            lineStyle: getLineStyle(event.payload.strength),
+            isActive: true,
+        },
+    };
+
+    return {
+        ...state,
+        connections: [...state.connections, connection],
+        connectionCount: state.connections.length + 1,
+        updatedAt: event.occurredAt,
+        lastActivityAt: event.occurredAt,
+        eventIds: [...state.eventIds, event.id],
+    };
+}
+
+function applyEvidenceDisconnected(state: CaseState, event: EvidenceDisconnectedEvent): CaseState {
+    const connectionIndex = state.connections.findIndex(
+        c => c.id === event.payload.connectionId
+    );
+
+    if (connectionIndex === -1) return state;
+
+    const newConnections = state.connections.filter(
+        c => c.id !== event.payload.connectionId
+    );
+
+    return {
+        ...state,
+        connections: newConnections,
+        connectionCount: newConnections.length,
+        updatedAt: event.occurredAt,
+        lastActivityAt: event.occurredAt,
+        eventIds: [...state.eventIds, event.id],
+    };
+}
+
+function applyHypothesisCreated(state: CaseState, event: HypothesisCreatedEvent): CaseState {
+    const hypothesis: Hypothesis = {
+        id: event.payload.hypothesisId,
+        caseId: event.payload.caseId,
+        title: event.payload.title,
+        description: event.payload.description,
+        supportingEvidenceIds: [...event.payload.supportingEvidenceIds],
+        confidence: event.payload.confidence,
+        status: event.payload.status,
+        createdBy: event.actorId,
+        createdAt: event.occurredAt,
+        updatedAt: event.occurredAt,
+        metadata: {
+            color: event.payload.color || getHypothesisColor(event.payload.confidence),
+        },
+    };
+
+    const activeCount = event.payload.status === 'active'
+        ? state.activeHypothesisCount + 1
+        : state.activeHypothesisCount;
+
+    return {
+        ...state,
+        hypotheses: [...state.hypotheses, hypothesis],
+        activeHypothesisCount: activeCount,
+        updatedAt: event.occurredAt,
+        lastActivityAt: event.occurredAt,
+        eventIds: [...state.eventIds, event.id],
+    };
+}
+
+function applyHypothesisUpdated(state: CaseState, event: HypothesisUpdatedEvent): CaseState {
+    const hypothesisIndex = state.hypotheses.findIndex(
+        h => h.id === event.payload.hypothesisId
+    );
+
+    if (hypothesisIndex === -1) return state;
+
+    const originalHypothesis = state.hypotheses[hypothesisIndex];
+    const updates = event.payload.updates;
+
+    const updatedHypothesis: Hypothesis = {
+        ...originalHypothesis,
+        title: updates.title ?? originalHypothesis.title,
+        description: updates.description ?? originalHypothesis.description,
+        confidence: updates.confidence ?? originalHypothesis.confidence,
+        status: updates.status ?? originalHypothesis.status,
+        supportingEvidenceIds: updates.supportingEvidenceIds ?? originalHypothesis.supportingEvidenceIds,
+        updatedAt: event.occurredAt,
+    };
+
+    const newHypotheses = [...state.hypotheses];
+    newHypotheses[hypothesisIndex] = updatedHypothesis;
+
+    // Recalculate active hypothesis count
+    const activeCount = newHypotheses.filter(h => h.status === 'active').length;
+
+    return {
+        ...state,
+        hypotheses: newHypotheses,
+        activeHypothesisCount: activeCount,
+        updatedAt: event.occurredAt,
+        lastActivityAt: event.occurredAt,
+        eventIds: [...state.eventIds, event.id],
+    };
+}
+
+function applyHypothesisResolved(state: CaseState, event: HypothesisResolvedEvent): CaseState {
+    const hypothesisIndex = state.hypotheses.findIndex(
+        h => h.id === event.payload.hypothesisId
+    );
+
+    if (hypothesisIndex === -1) return state;
+
+    const originalHypothesis = state.hypotheses[hypothesisIndex];
+    const resolvedHypothesis: Hypothesis = {
+        ...originalHypothesis,
+        status: event.payload.resolution,
+        resolution: event.payload.resolution,
+        conclusion: event.payload.conclusion,
+        resolvedAt: event.occurredAt,
+        updatedAt: event.occurredAt,
+    };
+
+    const newHypotheses = [...state.hypotheses];
+    newHypotheses[hypothesisIndex] = resolvedHypothesis;
+
+    const activeCount = newHypotheses.filter(h => h.status === 'active').length;
+
+    return {
+        ...state,
+        hypotheses: newHypotheses,
+        activeHypothesisCount: activeCount,
+        updatedAt: event.occurredAt,
+        lastActivityAt: event.occurredAt,
+        eventIds: [...state.eventIds, event.id],
+    };
+}
+
+function applyVisualLayoutUpdated(state: CaseState, event: VisualLayoutUpdatedEvent): CaseState {
+    const layout: VisualLayout = {
+        caseId: event.payload.caseId,
+        nodePositions: { ...event.payload.nodePositions },
+        hypothesisPositions: state.visualLayout?.hypothesisPositions || {},
+        canvasView: {
+            ...event.payload.canvasView,
+            lastUpdated: event.occurredAt,
+        },
+    };
+
+    return {
+        ...state,
+        visualLayout: layout,
+        updatedAt: event.occurredAt,
+        lastActivityAt: event.occurredAt,
+        eventIds: [...state.eventIds, event.id],
+    };
+}
+
+function applyInvestigationPathCreated(state: CaseState, event: InvestigationPathCreatedEvent): CaseState {
+    const path: InvestigationPath = {
+        id: event.payload.pathId,
+        caseId: event.payload.caseId,
+        title: event.payload.title,
+        description: event.payload.description,
+        sequence: [...event.payload.sequence],
+        summary: event.payload.summary,
+        createdBy: event.actorId,
+        createdAt: event.occurredAt,
+    };
+
+    return {
+        ...state,
+        investigationPaths: [...state.investigationPaths, path],
+        updatedAt: event.occurredAt,
+        lastActivityAt: event.occurredAt,
+        eventIds: [...state.eventIds, event.id],
+    };
+}
+
+// ===== HELPER FUNCTIONS =====
+
+function getConnectionColor(type: ConnectionType): string {
+    const colors: Record<ConnectionType, string> = {
+        supports: '#22C55E',      // green
+        contradicts: '#EF4444',   // red
+        related_to: '#3B82F6',    // blue
+        timeline: '#A855F7',      // purple
+        causality: '#F59E0B',     // amber
+        metadata: '#6B7280',      // gray
+    };
+    return colors[type] || '#6B7280';
+}
+
+function getLineStyle(strength: ConnectionStrength): 'solid' | 'dashed' | 'dotted' {
+    switch (strength) {
+        case 3: return 'solid';
+        case 2: return 'dashed';
+        case 1: return 'dotted';
+        default: return 'dashed';
+    }
+}
+
+function getHypothesisColor(confidence: 'low' | 'medium' | 'high'): string {
+    const colors = {
+        low: '#FCD34D',     // yellow
+        medium: '#FB923C',  // orange
+        high: '#22C55E',    // green
+    };
+    return colors[confidence] || '#6B7280';
+}
+
 // ===== UTILITY FUNCTIONS =====
 
 /**
@@ -298,7 +553,7 @@ export function replayEvents(events: AppEvent[]): CaseState[] {
 
     for (const event of sortedEvents) {
         currentState = applyEvent(currentState, event);
-        states.push({ ...currentState }); // Clone state
+        states.push({ ...currentState });
     }
 
     return states;
@@ -313,13 +568,11 @@ export function validateEventSequence(events: AppEvent[]): { valid: boolean; err
         (a, b) => new Date(a.occurredAt).getTime() - new Date(b.occurredAt).getTime()
     );
 
-    // Check for CASE_CREATED as first event
     const firstEvent = sortedEvents[0];
     if (firstEvent && firstEvent.type !== 'CASE_CREATED') {
         errors.push('First event must be CASE_CREATED');
     }
 
-    // Check chronological order (should match sorted order)
     for (let i = 1; i < sortedEvents.length; i++) {
         const prevTime = new Date(sortedEvents[i - 1].occurredAt).getTime();
         const currTime = new Date(sortedEvents[i].occurredAt).getTime();
@@ -329,7 +582,6 @@ export function validateEventSequence(events: AppEvent[]): { valid: boolean; err
         }
     }
 
-    // Check for duplicate event IDs
     const eventIds = new Set<string>();
     for (const event of sortedEvents) {
         if (eventIds.has(event.id)) {

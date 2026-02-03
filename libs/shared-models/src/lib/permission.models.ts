@@ -1,9 +1,9 @@
 /**
- * PERMISSION SYSTEM - Role-based access control
+ * PERMISSION SYSTEM - Role-based access control with Mind Palace
  * Compile-time checked permission matrix
  */
 
-import { UserRole } from './event.models';
+import { UserRole, EventType } from './event.models';
 import { CaseState } from './domain.models';
 
 
@@ -33,7 +33,17 @@ export type Action =
     | 'time_travel'
     | 'simulate_role'
     | 'audit_log'
-    | 'generate_report';
+    | 'generate_report'
+
+    // ===== MIND PALACE ACTIONS =====
+    | 'create_connection'
+    | 'delete_connection'
+    | 'create_hypothesis'
+    | 'update_hypothesis'
+    | 'resolve_hypothesis'
+    | 'update_layout'
+    | 'create_investigation_path'
+    | 'view_board';
 
 // ===== PERMISSION MATRIX (Compile-time checked) =====
 export const PERMISSION_MATRIX: Record<UserRole, Record<Action, boolean>> = {
@@ -63,6 +73,16 @@ export const PERMISSION_MATRIX: Record<UserRole, Record<Action, boolean>> = {
         simulate_role: false,
         audit_log: false,
         generate_report: false,
+
+        // Mind Palace - Viewers can only view
+        create_connection: false,
+        delete_connection: false,
+        create_hypothesis: false,
+        update_hypothesis: false,
+        resolve_hypothesis: false,
+        update_layout: false,
+        create_investigation_path: false,
+        view_board: true,
     },
 
     investigator: {
@@ -91,6 +111,16 @@ export const PERMISSION_MATRIX: Record<UserRole, Record<Action, boolean>> = {
         simulate_role: true,
         audit_log: true,
         generate_report: true,
+
+        // Mind Palace - Full access except resolve
+        create_connection: true,
+        delete_connection: true,
+        create_hypothesis: true,
+        update_hypothesis: true,
+        resolve_hypothesis: false,
+        update_layout: true,
+        create_investigation_path: true,
+        view_board: true,
     },
 
     supervisor: {
@@ -103,7 +133,7 @@ export const PERMISSION_MATRIX: Record<UserRole, Record<Action, boolean>> = {
         export_case: true,
 
         // Evidence
-        add_evidence: false, // Supervisors approve, not add
+        add_evidence: false,
         view_evidence: true,
         view_restricted_evidence: true,
         correct_evidence: true,
@@ -119,6 +149,16 @@ export const PERMISSION_MATRIX: Record<UserRole, Record<Action, boolean>> = {
         simulate_role: true,
         audit_log: true,
         generate_report: true,
+
+        // Mind Palace - Full access
+        create_connection: true,
+        delete_connection: true,
+        create_hypothesis: true,
+        update_hypothesis: true,
+        resolve_hypothesis: true,
+        update_layout: true,
+        create_investigation_path: true,
+        view_board: true,
     },
 } as const;
 
@@ -126,7 +166,7 @@ export const PERMISSION_MATRIX: Record<UserRole, Record<Action, boolean>> = {
 export interface BusinessRule {
     readonly id: string;
     readonly description: string;
-    readonly condition: (caseState: CaseState, userRole: UserRole, action: Action) => boolean;
+    readonly condition: (caseState: CaseState, userRole: UserRole, action: Action, payload?: unknown) => boolean;
     readonly errorMessage: string;
 }
 
@@ -154,7 +194,7 @@ export const BUSINESS_RULES: BusinessRule[] = [
         description: 'Cannot assign case to yourself',
         condition: (caseState, userRole, action) => {
             if (action !== 'assign_case') return true;
-            return true; // Additional check in runtime with userId
+            return true;
         },
         errorMessage: 'Cannot assign case to yourself',
     },
@@ -166,7 +206,7 @@ export const BUSINESS_RULES: BusinessRule[] = [
             const closedTime = new Date(caseState.closedAt).getTime();
             const currentTime = Date.now();
             const hoursSinceClosed = (currentTime - closedTime) / (1000 * 60 * 60);
-            return hoursSinceClosed >= 24; // 24-hour cooling period
+            return hoursSinceClosed >= 24;
         },
         errorMessage: 'Case cannot be reopened within 24 hours of closure',
     },
@@ -193,10 +233,48 @@ export const BUSINESS_RULES: BusinessRule[] = [
         description: 'Cannot add internal notes without investigator+ role',
         condition: (caseState, userRole, action) => {
             if (action !== 'add_note') return true;
-            // This is handled by permission matrix, but included for clarity
             return true;
         },
         errorMessage: 'Internal notes require investigator or supervisor role',
+    },
+    // ===== MIND PALACE BUSINESS RULES =====
+    {
+        id: 'BR-MP-001',
+        description: 'Cannot create connection on closed case',
+        condition: (caseState, userRole, action) => {
+            if (action !== 'create_connection') return true;
+            return caseState.status === 'open';
+        },
+        errorMessage: 'Cannot create connections on a closed case',
+    },
+    {
+        id: 'BR-MP-002',
+        description: 'Cannot create hypothesis without evidence',
+        condition: (caseState, userRole, action) => {
+            if (action !== 'create_hypothesis') return true;
+            return caseState.evidenceCount > 0;
+        },
+        errorMessage: 'Cannot create hypothesis without evidence',
+    },
+    {
+        id: 'BR-MP-003',
+        description: 'Only supervisors can resolve hypotheses',
+        condition: (caseState, userRole, action) => {
+            if (action !== 'resolve_hypothesis') return true;
+            return userRole === 'supervisor';
+        },
+        errorMessage: 'Only supervisors can resolve hypotheses',
+    },
+    {
+        id: 'BR-MP-004',
+        description: 'Cannot connect evidence to itself',
+        condition: (caseState, userRole, action, payload) => {
+            if (action !== 'create_connection') return true;
+            if (!payload || typeof payload !== 'object') return true;
+            const p = payload as { sourceEvidenceId?: string; targetEvidenceId?: string };
+            return p.sourceEvidenceId !== p.targetEvidenceId;
+        },
+        errorMessage: 'Cannot connect evidence to itself',
     },
 ];
 
@@ -206,7 +284,8 @@ export function can(
     action: Action,
     caseState: CaseState,
     userId?: string,
-    targetUserId?: string
+    targetUserId?: string,
+    payload?: unknown
 ): { allowed: boolean; reason?: string } {
 
     // 1. Check permission matrix
@@ -216,7 +295,7 @@ export function can(
 
     // 2. Check business rules
     for (const rule of BUSINESS_RULES) {
-        if (!rule.condition(caseState, userRole, action)) {
+        if (!rule.condition(caseState, userRole, action, payload)) {
             return { allowed: false, reason: rule.errorMessage };
         }
     }
@@ -239,13 +318,13 @@ export function createPermissionChecker(
     caseState: CaseState,
     userId?: string
 ) {
-    return (action: Action, targetUserId?: string) =>
-        can(userRole, action, caseState, userId, targetUserId);
+    return (action: Action, targetUserId?: string, payload?: unknown) =>
+        can(userRole, action, caseState, userId, targetUserId, payload);
 }
 
 // ===== ACTION MAPPING =====
-export function eventTypeToAction(eventType: string): Action {
-    const map: Record<string, Action> = {
+export function eventTypeToAction(eventType: EventType): Action {
+    const map: Record<EventType, Action> = {
         'CASE_CREATED': 'create_case',
         'CASE_ASSIGNED': 'assign_case',
         'CASE_CLOSED': 'close_case',
@@ -254,6 +333,14 @@ export function eventTypeToAction(eventType: string): Action {
         'EVIDENCE_CORRECTED': 'correct_evidence',
         'EVIDENCE_VISIBILITY_CHANGED': 'change_evidence_visibility',
         'NOTE_ADDED': 'add_note',
+        // ===== MIND PALACE MAPPINGS =====
+        'EVIDENCE_CONNECTED': 'create_connection',
+        'EVIDENCE_DISCONNECTED': 'delete_connection',
+        'HYPOTHESIS_CREATED': 'create_hypothesis',
+        'HYPOTHESIS_UPDATED': 'update_hypothesis',
+        'HYPOTHESIS_RESOLVED': 'resolve_hypothesis',
+        'VISUAL_LAYOUT_UPDATED': 'update_layout',
+        'INVESTIGATION_PATH_CREATED': 'create_investigation_path',
     };
 
     return map[eventType] || 'view_case';

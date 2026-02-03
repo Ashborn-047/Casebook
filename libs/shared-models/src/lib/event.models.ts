@@ -1,5 +1,5 @@
 /**
- * CASBOOK - Event Sourcing Core
+ * CASBOOK - Event Sourcing Core with Mind Palace
  * Every meaningful action is an immutable event
  */
 
@@ -8,6 +8,9 @@ export type UserRole = 'viewer' | 'investigator' | 'supervisor';
 export type CaseStatus = 'open' | 'closed';
 export type EvidenceType = 'file' | 'text' | 'url';
 export type EvidenceVisibility = 'normal' | 'restricted';
+export type ConnectionType = 'supports' | 'contradicts' | 'related_to' | 'timeline' | 'causality' | 'metadata';
+export type HypothesisStatus = 'active' | 'disproven' | 'proven' | 'archived';
+export type ConnectionStrength = 1 | 2 | 3; // Weak, Medium, Strong
 
 // ===== EVENT TYPES =====
 export type EventType =
@@ -18,7 +21,15 @@ export type EventType =
     | 'EVIDENCE_ADDED'
     | 'EVIDENCE_CORRECTED'
     | 'EVIDENCE_VISIBILITY_CHANGED'
-    | 'NOTE_ADDED';
+    | 'NOTE_ADDED'
+    // ===== MIND PALACE EVENTS =====
+    | 'EVIDENCE_CONNECTED'
+    | 'EVIDENCE_DISCONNECTED'
+    | 'HYPOTHESIS_CREATED'
+    | 'HYPOTHESIS_UPDATED'
+    | 'HYPOTHESIS_RESOLVED'
+    | 'VISUAL_LAYOUT_UPDATED'
+    | 'INVESTIGATION_PATH_CREATED';
 
 // ===== BASE EVENT =====
 export interface BaseEvent {
@@ -31,6 +42,8 @@ export interface BaseEvent {
         userAgent?: string;
         ipAddress?: string;
         deviceId?: string;
+        boardX?: number;               // For visual events (x coordinate)
+        boardY?: number;               // For visual events (y coordinate)
     };
 }
 
@@ -102,6 +115,76 @@ export interface NoteAddedPayload {
     isInternal: boolean;     // Internal notes only visible to investigators+
 }
 
+// ===== MIND PALACE PAYLOADS =====
+
+export interface EvidenceConnectedPayload {
+    connectionId: string;
+    caseId: string;
+    sourceEvidenceId: string;
+    targetEvidenceId: string;
+    connectionType: ConnectionType;
+    reason: string;
+    strength: ConnectionStrength;
+    notes?: string;
+}
+
+export interface EvidenceDisconnectedPayload {
+    connectionId: string;
+    caseId: string;
+    disconnectedBy: string;
+    reason: string;
+}
+
+export interface HypothesisCreatedPayload {
+    hypothesisId: string;
+    caseId: string;
+    title: string;
+    description: string;
+    supportingEvidenceIds: string[];
+    confidence: 'low' | 'medium' | 'high';
+    status: HypothesisStatus;
+    color?: string;
+}
+
+export interface HypothesisUpdatedPayload {
+    hypothesisId: string;
+    caseId: string;
+    updates: {
+        title?: string;
+        description?: string;
+        confidence?: 'low' | 'medium' | 'high';
+        status?: HypothesisStatus;
+        supportingEvidenceIds?: string[];
+    };
+}
+
+export interface HypothesisResolvedPayload {
+    hypothesisId: string;
+    caseId: string;
+    resolution: 'proven' | 'disproven';
+    conclusion: string;
+    resolvedBy: string;
+}
+
+export interface VisualLayoutUpdatedPayload {
+    caseId: string;
+    nodePositions: Record<string, { x: number; y: number }>;
+    canvasView: {
+        zoom: number;
+        panX: number;
+        panY: number;
+    };
+}
+
+export interface InvestigationPathCreatedPayload {
+    pathId: string;
+    caseId: string;
+    title: string;
+    description: string;
+    sequence: string[];
+    summary: string;
+}
+
 // ===== SPECIFIC EVENTS =====
 
 export interface CaseCreatedEvent extends BaseEvent {
@@ -144,6 +227,43 @@ export interface NoteAddedEvent extends BaseEvent {
     payload: NoteAddedPayload;
 }
 
+// ===== MIND PALACE EVENTS =====
+
+export interface EvidenceConnectedEvent extends BaseEvent {
+    type: 'EVIDENCE_CONNECTED';
+    payload: EvidenceConnectedPayload;
+}
+
+export interface EvidenceDisconnectedEvent extends BaseEvent {
+    type: 'EVIDENCE_DISCONNECTED';
+    payload: EvidenceDisconnectedPayload;
+}
+
+export interface HypothesisCreatedEvent extends BaseEvent {
+    type: 'HYPOTHESIS_CREATED';
+    payload: HypothesisCreatedPayload;
+}
+
+export interface HypothesisUpdatedEvent extends BaseEvent {
+    type: 'HYPOTHESIS_UPDATED';
+    payload: HypothesisUpdatedPayload;
+}
+
+export interface HypothesisResolvedEvent extends BaseEvent {
+    type: 'HYPOTHESIS_RESOLVED';
+    payload: HypothesisResolvedPayload;
+}
+
+export interface VisualLayoutUpdatedEvent extends BaseEvent {
+    type: 'VISUAL_LAYOUT_UPDATED';
+    payload: VisualLayoutUpdatedPayload;
+}
+
+export interface InvestigationPathCreatedEvent extends BaseEvent {
+    type: 'INVESTIGATION_PATH_CREATED';
+    payload: InvestigationPathCreatedPayload;
+}
+
 // ===== UNION TYPE =====
 export type AppEvent =
     | CaseCreatedEvent
@@ -153,7 +273,15 @@ export type AppEvent =
     | EvidenceAddedEvent
     | EvidenceCorrectedEvent
     | EvidenceVisibilityChangedEvent
-    | NoteAddedEvent;
+    | NoteAddedEvent
+    // ===== MIND PALACE EVENTS =====
+    | EvidenceConnectedEvent
+    | EvidenceDisconnectedEvent
+    | HypothesisCreatedEvent
+    | HypothesisUpdatedEvent
+    | HypothesisResolvedEvent
+    | VisualLayoutUpdatedEvent
+    | InvestigationPathCreatedEvent;
 
 // ===== TYPE GUARDS =====
 export function isCaseCreatedEvent(event: AppEvent): event is CaseCreatedEvent {
@@ -168,7 +296,13 @@ export function isNoteAddedEvent(event: AppEvent): event is NoteAddedEvent {
     return event.type === 'NOTE_ADDED';
 }
 
-// Add similar guards for other event types...
+export function isEvidenceConnectedEvent(event: AppEvent): event is EvidenceConnectedEvent {
+    return event.type === 'EVIDENCE_CONNECTED';
+}
+
+export function isHypothesisCreatedEvent(event: AppEvent): event is HypothesisCreatedEvent {
+    return event.type === 'HYPOTHESIS_CREATED';
+}
 
 // ===== EVENT CREATOR =====
 export function createEvent<T extends AppEvent>(
@@ -187,6 +321,52 @@ export function createEvent<T extends AppEvent>(
         metadata,
         payload: payload as T['payload'],
     } as T;
+}
+
+// ===== MIND PALACE SPECIFIC CREATORS =====
+export function createEvidenceConnection(
+    caseId: string,
+    sourceEvidenceId: string,
+    targetEvidenceId: string,
+    connectionType: ConnectionType,
+    reason: string,
+    strength: ConnectionStrength,
+    actorId: string,
+    actorRole: UserRole,
+    notes?: string
+): EvidenceConnectedEvent {
+    return createEvent('EVIDENCE_CONNECTED', {
+        connectionId: `conn-${crypto.randomUUID().split('-')[0]}`,
+        caseId,
+        sourceEvidenceId,
+        targetEvidenceId,
+        connectionType,
+        reason,
+        strength,
+        notes,
+    }, actorId, actorRole);
+}
+
+export function createHypothesis(
+    caseId: string,
+    title: string,
+    description: string,
+    supportingEvidenceIds: string[],
+    confidence: 'low' | 'medium' | 'high',
+    actorId: string,
+    actorRole: UserRole,
+    color?: string
+): HypothesisCreatedEvent {
+    return createEvent('HYPOTHESIS_CREATED', {
+        hypothesisId: `hyp-${crypto.randomUUID().split('-')[0]}`,
+        caseId,
+        title,
+        description,
+        supportingEvidenceIds,
+        confidence,
+        status: 'active',
+        color,
+    }, actorId, actorRole);
 }
 
 // ===== EVENT VALIDATION =====

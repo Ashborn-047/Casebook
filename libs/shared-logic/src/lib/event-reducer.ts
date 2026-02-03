@@ -30,6 +30,15 @@ import {
     VisualLayout,
     INITIAL_CASE_STATE
 } from '@casbook/shared-models';
+import {
+    BoardState,
+    BoardNode,
+    BoardConnection,
+    INITIAL_BOARD_STATE,
+    createBoardNode,
+    createBoardConnection,
+    calculateConnectionPath
+} from '@casbook/shared-models';
 
 // ===== REDUCER CORE =====
 
@@ -593,5 +602,106 @@ export function validateEventSequence(events: AppEvent[]): { valid: boolean; err
     return {
         valid: errors.length === 0,
         errors,
+    };
+}
+
+// ===== BOARD STATE CREATION =====
+
+/**
+ * Create initial board state from case state
+ * Converts evidence and hypotheses to board nodes, connections to board connections
+ */
+export function createInitialBoardState(caseState: CaseState): BoardState {
+    const nodes: BoardNode[] = [];
+    const nodeMap = new Map<string, string>(); // dataId -> nodeId mapping
+
+    // Create evidence nodes in a grid layout
+    caseState.evidence.forEach((evidence, index) => {
+        const x = 100 + (index % 5) * 250;
+        const y = 100 + Math.floor(index / 5) * 180;
+
+        const node = createBoardNode('evidence', evidence.id, { x, y }, {
+            color: evidence.visibility === 'restricted' ? '#EF4444' : '#4ECDC4',
+            icon: evidence.visibility === 'restricted' ? '🔒' : '🔍',
+        });
+
+        nodes.push(node);
+        nodeMap.set(evidence.id, node.id);
+    });
+
+    // Create hypothesis nodes below evidence
+    caseState.hypotheses.forEach((hypothesis, index) => {
+        const x = 100 + (index % 4) * 300;
+        const y = 500 + Math.floor(index / 4) * 200;
+
+        const node = createBoardNode('hypothesis', hypothesis.id, { x, y }, {
+            color: hypothesis.metadata?.color || '#FFE66D',
+            icon: '💡',
+        });
+
+        nodes.push(node);
+        nodeMap.set(hypothesis.id, node.id);
+    });
+
+    // Create board connections from investigation connections
+    const connections: BoardConnection[] = [];
+
+    for (const conn of caseState.connections) {
+        const sourceNodeId = nodeMap.get(conn.sourceEvidenceId);
+        const targetNodeId = nodeMap.get(conn.targetEvidenceId);
+
+        if (!sourceNodeId || !targetNodeId) continue;
+
+        const sourceNode = nodes.find(n => n.id === sourceNodeId);
+        const targetNode = nodes.find(n => n.id === targetNodeId);
+
+        if (!sourceNode || !targetNode) continue;
+
+        const boardConn = createBoardConnection(
+            sourceNodeId,
+            targetNodeId,
+            conn.id,
+            conn.connectionType,
+            conn.strength
+        );
+
+        // Calculate path for the connection
+        const path = calculateConnectionPath(
+            sourceNode.position,
+            targetNode.position,
+            'bezier'
+        );
+
+        connections.push({
+            ...boardConn,
+            path,
+            metadata: {
+                ...boardConn.metadata,
+                label: conn.reason.substring(0, 30),
+            },
+        });
+    }
+
+    // Apply saved layout if it exists
+    if (caseState.visualLayout) {
+        nodes.forEach(node => {
+            const savedPos = caseState.visualLayout?.nodePositions[node.dataId];
+            if (savedPos) {
+                (node as { position: { x: number; y: number } }).position = savedPos;
+            }
+        });
+    }
+
+    return {
+        ...INITIAL_BOARD_STATE,
+        caseId: caseState.id,
+        nodes,
+        connections,
+        viewport: caseState.visualLayout?.canvasView ? {
+            ...INITIAL_BOARD_STATE.viewport,
+            zoom: caseState.visualLayout.canvasView.zoom,
+            panX: caseState.visualLayout.canvasView.panX,
+            panY: caseState.visualLayout.canvasView.panY,
+        } : INITIAL_BOARD_STATE.viewport,
     };
 }

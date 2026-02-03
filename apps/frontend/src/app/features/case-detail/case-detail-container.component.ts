@@ -1,7 +1,8 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { CaseStore } from '../../core/state/case-store.service';
+import { BoardStore } from '../../core/state/board-store.service';
 import {
   GlassCardComponent,
   BrutalButtonComponent,
@@ -9,6 +10,8 @@ import {
   TimelineItemComponent
 } from '@casbook/shared-ui';
 import { UserRole } from '@casbook/shared-models';
+import { InvestigationBoardComponent } from './investigation-board/investigation-board.component';
+import { BoardToolbarComponent } from './board-tools/board-toolbar.component';
 
 @Component({
   selector: 'app-case-detail-container',
@@ -19,12 +22,14 @@ import { UserRole } from '@casbook/shared-models';
     GlassCardComponent,
     BrutalButtonComponent,
     RoleBadgeComponent,
-    TimelineItemComponent
+    TimelineItemComponent,
+    InvestigationBoardComponent,
+    BoardToolbarComponent
   ],
   template: `
     <div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
       <!-- Header -->
-      <header class="max-w-6xl mx-auto mb-8">
+      <header class="max-w-6xl mx-auto mb-8" [class.max-w-none]="viewMode() === 'board'">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-4">
             <cb-brutal-button variant="ghost" size="sm" icon="←" (clicked)="goBack()">
@@ -37,6 +42,18 @@ import { UserRole } from '@casbook/shared-models';
           </div>
           
           <div class="flex items-center gap-3">
+            <!-- Save Board Layout Button (only in board view) -->
+            <cb-brutal-button 
+              *ngIf="viewMode() === 'board'" 
+              variant="secondary" 
+              size="sm" 
+              icon="💾"
+              (clicked)="saveBoardLayout()"
+              [disabled]="!canUpdateLayout"
+            >
+              Save Layout
+            </cb-brutal-button>
+            
             <cb-role-badge [role]="effectiveRole()"></cb-role-badge>
             
             <!-- Role Switcher -->
@@ -54,7 +71,7 @@ import { UserRole } from '@casbook/shared-models';
       </header>
 
       <!-- View Mode Switcher -->
-      <div class="max-w-6xl mx-auto mb-6">
+      <div class="max-w-6xl mx-auto mb-6" [class.max-w-none]="viewMode() === 'board'">
         <div class="flex gap-2">
           <cb-brutal-button 
             (clicked)="setViewMode('timeline')"
@@ -94,7 +111,10 @@ import { UserRole } from '@casbook/shared-models';
       </div>
 
       <!-- Main Content -->
-      <div *ngIf="!store.uiState().isLoading && currentCase()" class="max-w-6xl mx-auto">
+      <div *ngIf="!store.uiState().isLoading && currentCase()" 
+           class="mx-auto"
+           [class.max-w-6xl]="viewMode() === 'timeline'"
+           [class.max-w-none]="viewMode() === 'board'">
         
         <!-- Timeline View -->
         <div *ngIf="viewMode() === 'timeline'" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -151,48 +171,236 @@ import { UserRole } from '@casbook/shared-models';
           </div>
         </div>
         
-        <!-- Investigation Board View (Placeholder) -->
-        <div *ngIf="viewMode() === 'board'">
-          <cb-glass-card additionalClasses="p-8 text-center min-h-[500px] flex flex-col items-center justify-center">
-            <div class="text-6xl mb-6">🧠</div>
-            <h2 class="text-2xl font-bold text-brutal-dark mb-3">Investigation Board</h2>
-            <p class="text-gray-600 max-w-md mb-6">
-              Visual investigation board for connecting evidence, creating hypotheses, 
-              and building investigation paths. Coming in Phase 3!
-            </p>
-            
-            <!-- Mind Palace Stats -->
-            <div class="flex gap-4 mb-6">
-              <div class="text-center px-4 py-2 bg-indigo-50 rounded-lg">
-                <div class="text-2xl font-bold text-indigo-600">{{ connectionCount }}</div>
-                <div class="text-xs text-gray-500">Connections</div>
-              </div>
-              <div class="text-center px-4 py-2 bg-green-50 rounded-lg">
-                <div class="text-2xl font-bold text-green-600">{{ activeHypothesisCount }}</div>
-                <div class="text-xs text-gray-500">Hypotheses</div>
-              </div>
-              <div class="text-center px-4 py-2 bg-purple-50 rounded-lg">
-                <div class="text-2xl font-bold text-purple-600">{{ pathsCount }}</div>
-                <div class="text-xs text-gray-500">Paths</div>
-              </div>
+        <!-- Investigation Board View -->
+        <div *ngIf="viewMode() === 'board'" class="board-view-container">
+          <!-- Board Header with Instructions Button -->
+          <div class="board-header">
+            <div class="flex items-center gap-4">
+              <h2 class="text-lg font-semibold">🧠 Mind Palace - Investigation Board</h2>
+              <cb-brutal-button 
+                variant="ghost" 
+                size="sm" 
+                icon="❓" 
+                (clicked)="showBoardInstructions()"
+              >
+                Help
+              </cb-brutal-button>
             </div>
             
-            <cb-brutal-button variant="secondary" (clicked)="setViewMode('timeline')">
-              ← Return to Timeline
-            </cb-brutal-button>
-          </cb-glass-card>
+            <div class="flex items-center gap-3">
+              <div class="board-stats">
+                <span>{{ nodesCount() }} nodes</span>
+                <span class="text-gray-400">|</span>
+                <span>{{ connectionsCount() }} connections</span>
+                <span class="text-gray-400">|</span>
+                <span>{{ boardMode() | titlecase }} mode</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Board Layout -->
+          <div class="board-layout">
+            <!-- Toolbar (Left Sidebar) -->
+            <cb-glass-card additionalClasses="toolbar-sidebar">
+              <cb-board-toolbar></cb-board-toolbar>
+            </cb-glass-card>
+            
+            <!-- Canvas Container -->
+            <div class="canvas-container">
+              <cb-investigation-board></cb-investigation-board>
+            </div>
+          </div>
+          
+          <!-- Status Bar -->
+          <div class="board-status-bar">
+            <div class="flex items-center gap-4 text-sm text-gray-600">
+              <span>Grid: {{ isGridVisible() ? 'On' : 'Off' }}</span>
+              <span class="text-gray-400">|</span>
+              <span>Zoom: {{ boardZoom() }}%</span>
+              <span class="text-gray-400">|</span>
+              <span>Grid Size: {{ gridSize() }}px</span>
+            </div>
+            <div class="text-sm text-gray-500">
+              Press <kbd class="kbd">Space</kbd> for pan mode, 
+              <kbd class="kbd">Esc</kbd> to deselect
+            </div>
+          </div>
+          
+          <!-- Instructions Overlay -->
+          <div *ngIf="showInstructions()" class="instructions-overlay" (click)="dismissBoardInstructions()">
+            <cb-glass-card additionalClasses="instructions-card" (click)="$event.stopPropagation()">
+              <h3 class="text-xl font-bold mb-4">🧠 Investigation Board - Quick Guide</h3>
+              <div class="instructions-content">
+                <div class="instruction-item">
+                  <span class="instruction-icon">🖱️</span>
+                  <div>
+                    <strong>Select Mode</strong>
+                    <p>Click to select nodes, drag to move them</p>
+                  </div>
+                </div>
+                <div class="instruction-item">
+                  <span class="instruction-icon">🔗</span>
+                  <div>
+                    <strong>Connect Mode</strong>
+                    <p>Click a source node, then click a target to connect</p>
+                  </div>
+                </div>
+                <div class="instruction-item">
+                  <span class="instruction-icon">👆</span>
+                  <div>
+                    <strong>Pan Mode</strong>
+                    <p>Drag to pan the canvas. Or hold Space in select mode</p>
+                  </div>
+                </div>
+                <div class="instruction-item">
+                  <span class="instruction-icon">🖱️</span>
+                  <div>
+                    <strong>Zoom</strong>
+                    <p>Use mouse wheel to zoom in/out</p>
+                  </div>
+                </div>
+                <div class="instruction-item">
+                  <span class="instruction-icon">⌨️</span>
+                  <div>
+                    <strong>Keyboard Shortcuts</strong>
+                    <p>Ctrl+Z: Undo | Ctrl+Y: Redo | Esc: Deselect</p>
+                  </div>
+                </div>
+              </div>
+              <cb-brutal-button variant="primary" (clicked)="dismissBoardInstructions()">
+                Got it!
+              </cb-brutal-button>
+            </cb-glass-card>
+          </div>
         </div>
       </div>
     </div>
-  `
+  `,
+  styles: [`
+    .board-view-container {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 180px);
+      min-height: 600px;
+    }
+    
+    .board-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 12px;
+      border: 2px solid #1f2937;
+    }
+    
+    .board-stats {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+    }
+    
+    .board-layout {
+      display: flex;
+      flex: 1;
+      gap: 16px;
+      min-height: 0;
+    }
+    
+    .toolbar-sidebar {
+      width: 280px;
+      flex-shrink: 0;
+      overflow-y: auto;
+    }
+    
+    .canvas-container {
+      flex: 1;
+      border: 2px solid #1f2937;
+      border-radius: 12px;
+      overflow: hidden;
+      background: white;
+    }
+    
+    .board-status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      margin-top: 16px;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 12px;
+      border: 2px solid #1f2937;
+    }
+    
+    .kbd {
+      display: inline-block;
+      padding: 2px 6px;
+      background: #f3f4f6;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    
+    .instructions-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    
+    .instructions-card {
+      max-width: 500px;
+      padding: 24px;
+    }
+    
+    .instructions-content {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .instruction-item {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    
+    .instruction-icon {
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+    
+    .instruction-item p {
+      margin: 0;
+      color: #6b7280;
+      font-size: 14px;
+    }
+  `]
 })
 export class CaseDetailContainerComponent {
   store = inject(CaseStore);
+  boardStore = inject(BoardStore);
 
   viewMode = signal<'timeline' | 'board'>('timeline');
+  showInstructions = signal(false);
 
   currentCase = this.store.currentCase;
   timeline = this.store.timeline;
+
+  // Board state computed
+  nodesCount = computed(() => this.boardStore.nodes().length);
+  connectionsCount = computed(() => this.boardStore.connections().length);
+  boardMode = computed(() => this.boardStore.mode());
+  boardZoom = computed(() => Math.round(this.boardStore.viewport().zoom * 100));
+  gridSize = computed(() => this.boardStore.tools().gridSize);
+  isGridVisible = computed(() => this.boardStore.tools().isGridVisible);
 
   effectiveRole = () => this.store.uiState().roleOverride || this.store.currentUser().role;
 
@@ -211,6 +419,7 @@ export class CaseDetailContainerComponent {
   get canCreateConnections(): boolean { return this.currentCase()?.permissions?.canCreateConnections || false; }
   get canCreateHypotheses(): boolean { return this.currentCase()?.permissions?.canCreateHypotheses || false; }
   get canCloseCase(): boolean { return this.currentCase()?.permissions?.canCloseCase || false; }
+  get canUpdateLayout(): boolean { return this.currentCase()?.permissions?.canUpdateLayout || false; }
 
   setViewMode(mode: 'timeline' | 'board'): void {
     if (mode === 'board' && !this.canViewBoard) {
@@ -227,5 +436,16 @@ export class CaseDetailContainerComponent {
   goBack(): void {
     this.store.selectCase(null);
   }
-}
 
+  saveBoardLayout(): void {
+    this.boardStore.saveLayout();
+  }
+
+  showBoardInstructions(): void {
+    this.showInstructions.set(true);
+  }
+
+  dismissBoardInstructions(): void {
+    this.showInstructions.set(false);
+  }
+}

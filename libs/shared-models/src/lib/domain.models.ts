@@ -117,36 +117,7 @@ export interface VisualLayout {
     };
 }
 
-// ===== BOARD UI MODELS =====
-
-export interface BoardNode {
-    readonly id: string;
-    readonly type: 'evidence' | 'hypothesis' | 'note';
-    readonly x: number;
-    readonly y: number;
-    readonly width: number;
-    readonly height: number;
-    readonly data: Evidence | Hypothesis | Note;
-}
-
-export interface BoardConnection {
-    readonly id: string;
-    readonly sourceId: string;
-    readonly targetId: string;
-    readonly connectionType: ConnectionType;
-    readonly strength: ConnectionStrength;
-    readonly color: string;
-    readonly lineStyle: 'solid' | 'dashed' | 'dotted';
-}
-
-export interface BoardState {
-    readonly nodes: BoardNode[];
-    readonly connections: BoardConnection[];
-    readonly selectedNodeId: string | null;
-    readonly zoom: number;
-    readonly panX: number;
-    readonly panY: number;
-}
+// Board UI models are now defined in board.models.ts with enhanced features
 
 // ===== CASE STATE (Derived from events) =====
 

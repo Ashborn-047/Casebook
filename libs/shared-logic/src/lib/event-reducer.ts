@@ -7,6 +7,7 @@
 import {
     AppEvent,
     CaseCreatedEvent,
+    CaseAssignedEvent,
     EvidenceAddedEvent,
     NoteAddedEvent,
     EvidenceConnectedEvent,
@@ -142,9 +143,7 @@ function applyCaseCreated(state: CaseState, event: CaseCreatedEvent): CaseState 
     };
 }
 
-function applyCaseAssigned(state: CaseState, event: AppEvent): CaseState {
-    if (event.type !== 'CASE_ASSIGNED') return state;
-
+function applyCaseAssigned(state: CaseState, event: CaseAssignedEvent): CaseState {
     return {
         ...state,
         assignedInvestigatorId: event.payload.assignedTo,
@@ -240,9 +239,36 @@ function applyEvidenceCorrected(state: CaseState, event: AppEvent): CaseState {
     const newEvidence = [...state.evidence];
     newEvidence[evidenceIndex] = correctedEvidence;
 
+    // Update connections to reference new evidence ID
+    const newConnections = state.connections.map(conn => {
+        let updatedConn = conn;
+        if (conn.sourceEvidenceId === event.payload.originalEvidenceId) {
+            updatedConn = { ...updatedConn, sourceEvidenceId: event.payload.newEvidenceId };
+        }
+        if (conn.targetEvidenceId === event.payload.originalEvidenceId) {
+            updatedConn = { ...updatedConn, targetEvidenceId: event.payload.newEvidenceId };
+        }
+        return updatedConn;
+    });
+
+    // Update hypotheses to reference new evidence ID
+    const newHypotheses = state.hypotheses.map(hyp => {
+        if (hyp.supportingEvidenceIds.includes(event.payload.originalEvidenceId)) {
+            return {
+                ...hyp,
+                supportingEvidenceIds: hyp.supportingEvidenceIds.map(id =>
+                    id === event.payload.originalEvidenceId ? event.payload.newEvidenceId : id
+                )
+            };
+        }
+        return hyp;
+    });
+
     return {
         ...state,
         evidence: newEvidence,
+        connections: newConnections,
+        hypotheses: newHypotheses,
         updatedAt: event.occurredAt,
         lastActivityAt: event.occurredAt,
         eventIds: [...state.eventIds, event.id],
@@ -267,12 +293,8 @@ function applyEvidenceVisibilityChanged(state: CaseState, event: AppEvent): Case
     const newEvidence = [...state.evidence];
     newEvidence[evidenceIndex] = updatedEvidence;
 
-    let restrictedCount = state.restrictedEvidenceCount;
-    if (event.payload.oldVisibility === 'restricted' && event.payload.newVisibility === 'normal') {
-        restrictedCount--;
-    } else if (event.payload.oldVisibility === 'normal' && event.payload.newVisibility === 'restricted') {
-        restrictedCount++;
-    }
+    // Recalculate count from source of truth to avoid drift
+    const restrictedCount = newEvidence.filter(e => e.visibility === 'restricted').length;
 
     return {
         ...state,
@@ -574,26 +596,24 @@ export function replayEvents(events: AppEvent[]): CaseState[] {
  */
 export function validateEventSequence(events: AppEvent[]): { valid: boolean; errors: string[] } {
     const errors: string[] = [];
-    const sortedEvents = [...events].sort(
-        (a, b) => new Date(a.occurredAt).getTime() - new Date(b.occurredAt).getTime()
-    );
 
-    const firstEvent = sortedEvents[0];
+    // Check sequence in order provided (no sorting)
+    const firstEvent = events[0];
     if (firstEvent && firstEvent.type !== 'CASE_CREATED') {
         errors.push('First event must be CASE_CREATED');
     }
 
-    for (let i = 1; i < sortedEvents.length; i++) {
-        const prevTime = new Date(sortedEvents[i - 1].occurredAt).getTime();
-        const currTime = new Date(sortedEvents[i].occurredAt).getTime();
+    for (let i = 1; i < events.length; i++) {
+        const prevTime = new Date(events[i - 1].occurredAt).getTime();
+        const currTime = new Date(events[i].occurredAt).getTime();
 
         if (currTime < prevTime) {
-            errors.push(`Event ${sortedEvents[i].id} occurs before previous event`);
+            errors.push(`Event ${events[i].id} occurs before previous event`);
         }
     }
 
     const eventIds = new Set<string>();
-    for (const event of sortedEvents) {
+    for (const event of events) {
         if (eventIds.has(event.id)) {
             errors.push(`Duplicate event ID: ${event.id}`);
         }

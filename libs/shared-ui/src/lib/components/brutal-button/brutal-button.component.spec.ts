@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
 import { BrutalButtonComponent } from './brutal-button.component';
 
 describe('BrutalButtonComponent', () => {
@@ -24,16 +25,16 @@ describe('BrutalButtonComponent', () => {
     });
 
     it('should emit clicked event when clicked', () => {
-        const spy = spyOn(component.clicked, 'emit');
+        const spy = vi.spyOn(component.clicked, 'emit');
         const button = fixture.nativeElement.querySelector('button');
         button.click();
         expect(spy).toHaveBeenCalled();
     });
 
     it('should not emit clicked event when disabled', () => {
-        component.disabled = true;
+        fixture.componentRef.setInput('disabled', true);
         fixture.detectChanges();
-        const spy = spyOn(component.clicked, 'emit');
+        const spy = vi.spyOn(component.clicked, 'emit');
         const button = fixture.nativeElement.querySelector('button');
         button.click();
         expect(spy).not.toHaveBeenCalled();

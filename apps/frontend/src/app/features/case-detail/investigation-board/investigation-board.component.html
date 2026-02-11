@@ -1,87 +1,44 @@
 <!-- Board Container -->
-<div
-  #boardContainer
-  class="board-container"
-  (mousedown)="onBoardMouseDown($event)"
-  (mousemove)="onBoardMouseMove($event)"
-  (mouseup)="onBoardMouseUp($event)"
-  (wheel)="onBoardWheel($event)"
->
+<div #boardContainer class="board-container" (mousedown)="onBoardMouseDown($event)"
+  (mousemove)="onBoardMouseMove($event)" (mouseup)="onBoardMouseUp($event)" (wheel)="onBoardWheel($event)">
   <!-- Grid Background -->
-  <div
-    *ngIf="tools().isGridVisible"
-    class="board-grid"
-    [style.background-size]="gridSize() + 'px ' + gridSize() + 'px'"
-    [style.transform]="'translate(' + viewport().panX + 'px, ' + viewport().panY + 'px) scale(' + viewport().zoom + ')'"
-  ></div>
+  <div *ngIf="tools().isGridVisible" class="board-grid" [style.background-size]="gridSize() + 'px ' + gridSize() + 'px'"
+    [style.transform]="'translate(' + viewport().panX + 'px, ' + viewport().panY + 'px) scale(' + viewport().zoom + ')'">
+  </div>
 
   <!-- Connections Layer (SVG) -->
-  <svg
-    class="connections-layer"
-    [style.transform]="'translate(' + viewport().panX + 'px, ' + viewport().panY + 'px) scale(' + viewport().zoom + ')'"
-  >
+  <svg class="connections-layer"
+    [style.transform]="'translate(' + viewport().panX + 'px, ' + viewport().panY + 'px) scale(' + viewport().zoom + ')'">
     <!-- Connection lines -->
     <g *ngFor="let connection of connections()">
-      <path
-        [attr.d]="getConnectionPathD(connection)"
-        [attr.stroke]="connection.metadata.color"
-        [attr.stroke-width]="connection.strength * 2"
-        [attr.stroke-dasharray]="connection.metadata.lineStyle === 'dashed' ? '5,5' :
-                                 connection.metadata.lineStyle === 'dotted' ? '1,5' : 'none'"
-        fill="transparent"
-        class="connection-path"
-        [class.inactive]="!connection.metadata.isActive"
-        [class.deletable]="mode() === 'delete'"
-        (click)="onConnectionClick(connection.id)"
-      />
+      <path [attr.d]="getConnectionPathD(connection)" [attr.stroke]="connection.metadata.color"
+        [attr.stroke-width]="connection.strength * 2" [attr.stroke-dasharray]="connection.metadata.lineStyle === 'dashed' ? '5,5' :
+                                 connection.metadata.lineStyle === 'dotted' ? '1,5' : 'none'" fill="transparent"
+        class="connection-path" [class.inactive]="!connection.metadata.isActive" [class.deletable]="mode() === 'delete'"
+        (click)="onConnectionClick(connection.id)" />
 
       <!-- Connection label -->
-      <text
-        *ngIf="tools().showLabels && connection.metadata.label"
-        [attr.x]="getConnectionMidpoint(connection).x"
-        [attr.y]="getConnectionMidpoint(connection).y - 10"
-        text-anchor="middle"
-        class="connection-label"
-      >
+      <text *ngIf="tools().showLabels && connection.metadata.label" [attr.x]="getConnectionMidpoint(connection).x"
+        [attr.y]="getConnectionMidpoint(connection).y - 10" text-anchor="middle" class="connection-label">
         {{ connection.metadata.label }}
       </text>
     </g>
 
     <!-- Temporary connection line (while drawing) -->
-    <path
-      *ngIf="isDrawingConnection && tempConnection()"
-      [attr.d]="getTempConnectionPathD()"
-      stroke="#3B82F6"
-      stroke-width="2"
-      stroke-dasharray="5,5"
-      fill="transparent"
-    />
+    <path *ngIf="isDrawingConnection && tempConnection()" [attr.d]="getTempConnectionPathD()" stroke="#3B82F6"
+      stroke-width="2" stroke-dasharray="5,5" fill="transparent" />
   </svg>
 
   <!-- Nodes Layer -->
-  <div
-    class="nodes-layer"
-    [style.transform]="'translate(' + viewport().panX + 'px, ' + viewport().panY + 'px) scale(' + viewport().zoom + ')'"
-  >
+  <div class="nodes-layer"
+    [style.transform]="'translate(' + viewport().panX + 'px, ' + viewport().panY + 'px) scale(' + viewport().zoom + ')'">
     <!-- Evidence Nodes -->
-    <div
-      *ngFor="let node of evidenceNodes()"
-      class="board-node evidence-node"
-      [style.left.px]="node.position.x"
-      [style.top.px]="node.position.y"
-      [style.width.px]="node.size.width"
-      [style.height.px]="node.size.height"
-      [style.zIndex]="node.zIndex"
-      [class.selected]="node.isSelected"
-      [class.dragging]="node.isDragging"
-      [class.mode-connect]="mode() === 'connect'"
-      [class.mode-delete]="mode() === 'delete'"
-      (mousedown)="onNodeMouseDown(node.id, $event)"
-    >
-      <cb-glass-card
-        [blur]="true"
-        [additionalClasses]="getNodeClasses(node)"
-      >
+    <div *ngFor="let node of evidenceNodes()" class="board-node evidence-node" [style.left.px]="node.position.x"
+      [style.top.px]="node.position.y" [style.width.px]="node.size.width" [style.height.px]="node.size.height"
+      [style.zIndex]="node.zIndex" [class.selected]="node.isSelected" [class.dragging]="node.isDragging"
+      [class.mode-connect]="mode() === 'connect'" [class.mode-delete]="mode() === 'delete'"
+      (mousedown)="onNodeMouseDown(node.id, $event)">
+      <cb-glass-card [blur]="true" [additionalClasses]="getNodeClasses(node)">
         <div class="node-content">
           <div class="node-header">
             <span class="node-icon">{{ node.metadata.icon }}</span>
@@ -98,29 +55,15 @@
     </div>
 
     <!-- Hypothesis Nodes -->
-    <div
-      *ngFor="let node of hypothesisNodes()"
-      class="board-node hypothesis-node"
-      [style.left.px]="node.position.x"
-      [style.top.px]="node.position.y"
-      [style.width.px]="node.size.width"
-      [style.height.px]="node.size.height"
-      [style.zIndex]="node.zIndex + 10"
-      [class.selected]="node.isSelected"
-      [class.dragging]="node.isDragging"
-      (mousedown)="onNodeMouseDown(node.id, $event)"
-    >
-      <cb-glass-card
-        [blur]="true"
-        [additionalClasses]="getHypothesisNodeClasses(node)"
-      >
+    <div *ngFor="let node of hypothesisNodes()" class="board-node hypothesis-node" [style.left.px]="node.position.x"
+      [style.top.px]="node.position.y" [style.width.px]="node.size.width" [style.height.px]="node.size.height"
+      [style.zIndex]="node.zIndex + 10" [class.selected]="node.isSelected" [class.dragging]="node.isDragging"
+      (mousedown)="onNodeMouseDown(node.id, $event)">
+      <cb-glass-card [blur]="true" [additionalClasses]="getHypothesisNodeClasses(node)">
         <div class="node-content hypothesis-content">
           <div class="hypothesis-header">
             <span class="node-icon large">{{ node.metadata.icon }}</span>
-            <span
-              class="confidence-badge"
-              [ngClass]="getHypothesisConfidenceClass(node)"
-            >
+            <span class="confidence-badge" [ngClass]="getHypothesisConfidenceClass(node)">
               {{ getHypothesisConfidence(node) }}
             </span>
           </div>
@@ -137,12 +80,19 @@
   </div>
 
   <!-- Empty State -->
-  <div
-    *ngIf="nodes().length === 0"
-    class="empty-state"
-  >
+  <div *ngIf="nodes().length === 0" class="empty-state">
     <div class="empty-icon">🧠</div>
     <h3>No nodes on the board</h3>
     <p>Add evidence or create hypotheses to populate the investigation board.</p>
   </div>
+</div>
+
+<!-- Path Creator Toggle -->
+<button class="path-toggle-btn" (click)="isPathPanelOpen.set(!isPathPanelOpen())" title="Investigation Paths">
+  🧭
+</button>
+
+<!-- Path Creator Panel -->
+<div class="path-panel-wrapper" [class.open]="isPathPanelOpen()">
+  <cb-path-creator #pathCreator></cb-path-creator>
 </div>

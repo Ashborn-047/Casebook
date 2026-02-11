@@ -1,0 +1,444 @@
+:host {
+    display: block;
+}
+
+.path-panel-inner {
+    padding: 16px;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+}
+
+.panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+
+    h3 {
+        font-size: 16px;
+        font-weight: 700;
+        margin: 0;
+        color: #1e293b;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 18px;
+        cursor: pointer;
+        color: #64748b;
+        padding: 4px;
+        border-radius: 4px;
+
+        &:hover {
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+    }
+}
+
+// === Form ===
+.form-group {
+    margin-bottom: 12px;
+
+    label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: #475569;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+}
+
+.form-input,
+.form-textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    background: #f8fafc;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+
+    &:focus {
+        outline: none;
+        border-color: #3b82f6;
+        background: white;
+    }
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 48px;
+}
+
+// === Evidence Picker ===
+.evidence-picker {
+    margin-bottom: 12px;
+
+    label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: #475569;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+}
+
+.evidence-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+.evidence-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border-bottom: 1px solid #f1f5f9;
+
+    &:last-child {
+        border-bottom: none;
+    }
+
+    &:hover {
+        background: #e2e8f0;
+    }
+
+    &.selected {
+        background: #dbeafe;
+        border-color: #93c5fd;
+    }
+
+    .seq-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #3b82f6;
+        color: white;
+        font-size: 11px;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    .evidence-icon {
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+
+    .evidence-text {
+        font-size: 13px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex: 1;
+    }
+}
+
+.no-evidence {
+    padding: 16px;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+// === Sequence Preview ===
+.sequence-preview {
+    margin-bottom: 12px;
+
+    label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: #475569;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+}
+
+.sequence-items {
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    background: white;
+}
+
+.sequence-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid #f1f5f9;
+
+    &:last-child {
+        border-bottom: none;
+    }
+
+    .step-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        font-size: 12px;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    .step-text {
+        flex: 1;
+        font-size: 13px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .step-actions {
+        display: flex;
+        gap: 4px;
+        flex-shrink: 0;
+    }
+
+    .step-btn {
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        padding: 2px 6px;
+        font-size: 12px;
+        cursor: pointer;
+        color: #475569;
+        transition: all 0.15s;
+
+        &:hover:not(:disabled) {
+            background: #e2e8f0;
+        }
+
+        &:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        &.remove {
+            color: #ef4444;
+
+            &:hover:not(:disabled) {
+                background: #fee2e2;
+            }
+        }
+    }
+}
+
+// === Actions ===
+.form-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 16px;
+}
+
+.btn-cancel {
+    padding: 8px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    background: white;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #64748b;
+    transition: all 0.2s;
+
+    &:hover {
+        border-color: #94a3b8;
+        color: #1e293b;
+    }
+}
+
+.btn-save {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
+.btn-create {
+    width: 100%;
+    padding: 10px;
+    border: 2px dashed #93c5fd;
+    border-radius: 8px;
+    background: #eff6ff;
+    color: #3b82f6;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 12px;
+    transition: all 0.2s;
+
+    &:hover {
+        background: #dbeafe;
+        border-color: #3b82f6;
+    }
+}
+
+// === Saved Paths ===
+.empty-paths {
+    text-align: center;
+    padding: 24px 16px;
+    color: #94a3b8;
+
+    p {
+        margin: 0;
+        font-size: 14px;
+    }
+
+    .hint {
+        font-size: 12px;
+        margin-top: 4px;
+    }
+}
+
+.saved-path {
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    overflow: hidden;
+
+    &:hover {
+        border-color: #94a3b8;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+}
+
+.path-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+
+    .path-icon {
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+
+    .path-info {
+        flex: 1;
+        min-width: 0;
+
+        h4 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e293b;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .path-meta {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+    }
+
+    .expand-icon {
+        color: #94a3b8;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+}
+
+.path-details {
+    padding: 0 12px 12px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.path-description {
+    font-size: 13px;
+    color: #475569;
+    margin: 8px 0;
+}
+
+.path-steps {
+    margin: 8px 0;
+}
+
+.path-step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    position: relative;
+
+    .step-connector {
+        position: absolute;
+        left: 9px;
+        top: -8px;
+        width: 2px;
+        height: 12px;
+        background: #c7d2fe;
+    }
+
+    .step-badge.small {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #6366f1;
+        color: white;
+        font-size: 10px;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    .step-evidence {
+        font-size: 13px;
+        color: #334155;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+.path-summary {
+    font-size: 13px;
+    color: #475569;
+    margin: 8px 0 0;
+    padding: 8px;
+    background: #f8fafc;
+    border-radius: 6px;
+    border-left: 3px solid #6366f1;
+}

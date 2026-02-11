@@ -14,11 +14,12 @@ import { BoardStore } from '../../../core/state/board-store.service';
 import { CaseStore } from '../../../core/state/case-store.service';
 import { GlassCardComponent } from '@casbook/shared-ui';
 import { BoardNode, BoardConnection } from '@casbook/shared-models';
+import { PathCreatorComponent } from './path-creator/path-creator.component';
 
 @Component({
     selector: 'cb-investigation-board',
     standalone: true,
-    imports: [CommonModule, GlassCardComponent],
+    imports: [CommonModule, GlassCardComponent, PathCreatorComponent],
     templateUrl: './investigation-board.component.html',
     styleUrls: ['./investigation-board.component.scss']
 })
@@ -35,6 +36,9 @@ export class InvestigationBoardComponent implements OnInit, AfterViewInit {
     mode = this.boardStore.mode;
     tools = this.boardStore.tools;
     selectedNode = this.boardStore.selectedNode;
+
+    @ViewChild('pathCreator') pathCreator!: PathCreatorComponent;
+    isPathPanelOpen = signal(false);
 
     // Computed
     evidenceNodes = computed(() =>

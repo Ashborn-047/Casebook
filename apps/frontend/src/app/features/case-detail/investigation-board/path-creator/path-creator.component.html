@@ -1,0 +1,115 @@
+<cb-glass-card [blur]="true" additionalClasses="path-panel">
+    <div class="path-panel-inner">
+
+        <!-- Header -->
+        <div class="panel-header">
+            <h3>🧭 Investigation Paths</h3>
+            <button class="close-btn" (click)="toggle()">✕</button>
+        </div>
+
+        <!-- Building Mode -->
+        <div *ngIf="isBuilding()" class="building-mode">
+            <div class="form-group">
+                <label>Path Title *</label>
+                <input type="text" [ngModel]="pathTitle()" (ngModelChange)="pathTitle.set($event)"
+                    placeholder="e.g., Timeline of intrusion" class="form-input" />
+            </div>
+
+            <div class="form-group">
+                <label>Description</label>
+                <textarea [ngModel]="pathDescription()" (ngModelChange)="pathDescription.set($event)"
+                    placeholder="What does this path demonstrate?" class="form-textarea" rows="2"></textarea>
+            </div>
+
+            <!-- Evidence Picker -->
+            <div class="evidence-picker">
+                <label>Select Evidence ({{ selectedEvidenceIds().length }} selected)</label>
+                <div class="evidence-list">
+                    <div *ngFor="let evidence of availableEvidence()" class="evidence-item"
+                        [class.selected]="isSelected(evidence.id)" (click)="toggleEvidence(evidence.id)">
+                        <span class="seq-number" *ngIf="isSelected(evidence.id)">
+                            {{ getSequenceNumber(evidence.id) }}
+                        </span>
+                        <span class="evidence-icon">{{ evidence.visibility === 'restricted' ? '🔒' : '🔍' }}</span>
+                        <span class="evidence-text">{{ evidence.description }}</span>
+                    </div>
+                    <div *ngIf="availableEvidence().length === 0" class="no-evidence">
+                        No evidence available
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sequence Preview -->
+            <div *ngIf="sequencedEvidence().length > 0" class="sequence-preview">
+                <label>Path Sequence</label>
+                <div class="sequence-items">
+                    <div *ngFor="let ev of sequencedEvidence(); let i = index" class="sequence-item">
+                        <span class="step-badge">{{ i + 1 }}</span>
+                        <span class="step-text">{{ ev.description }}</span>
+                        <div class="step-actions">
+                            <button (click)="moveUp(i)" [disabled]="i === 0" class="step-btn">↑</button>
+                            <button (click)="moveDown(i)" [disabled]="i === sequencedEvidence().length - 1"
+                                class="step-btn">↓</button>
+                            <button (click)="removeFromSequence(i)" class="step-btn remove">✕</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Summary</label>
+                <textarea [ngModel]="pathSummary()" (ngModelChange)="pathSummary.set($event)"
+                    placeholder="Summarise the narrative" class="form-textarea" rows="2"></textarea>
+            </div>
+
+            <!-- Actions -->
+            <div class="form-actions">
+                <button class="btn-cancel" (click)="cancelBuilding()">Cancel</button>
+                <button class="btn-save" [disabled]="!canSave() || isSaving()" (click)="savePath()">
+                    {{ isSaving() ? 'Saving...' : 'Save Path' }}
+                </button>
+            </div>
+        </div>
+
+        <!-- List Mode -->
+        <div *ngIf="!isBuilding()" class="list-mode">
+            <button *ngIf="canCreate()" class="btn-create" (click)="startBuilding()">
+                + Create New Path
+            </button>
+
+            <div *ngIf="savedPaths().length === 0" class="empty-paths">
+                <p>No investigation paths yet.</p>
+                <p class="hint">Create a path to sequence evidence into a narrative.</p>
+            </div>
+
+            <div *ngFor="let path of savedPaths()" class="saved-path" (click)="togglePath(path.id)">
+                <div class="path-header">
+                    <span class="path-icon">🧭</span>
+                    <div class="path-info">
+                        <h4>{{ path.title }}</h4>
+                        <span class="path-meta">{{ path.sequence.length }} steps · {{ path.createdAt | date:'short'
+                            }}</span>
+                    </div>
+                    <span class="expand-icon">{{ expandedPathId() === path.id ? '▾' : '▸' }}</span>
+                </div>
+
+                <div *ngIf="expandedPathId() === path.id" class="path-details">
+                    <p *ngIf="path.description" class="path-description">{{ path.description }}</p>
+                    <div class="path-steps">
+                        <div *ngFor="let evidenceId of path.sequence; let i = index" class="path-step">
+                            <div class="step-connector" *ngIf="i > 0"></div>
+                            <span class="step-badge small">{{ i + 1 }}</span>
+                            <span class="step-evidence">
+                                {{ getEvidenceForId(evidenceId)?.description || evidenceId }}
+                            </span>
+                        </div>
+                    </div>
+                    <p *ngIf="path.summary" class="path-summary">
+                        <strong>Summary:</strong> {{ path.summary }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</cb-glass-card>

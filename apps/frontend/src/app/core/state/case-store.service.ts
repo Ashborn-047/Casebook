@@ -16,11 +16,13 @@ import { reduceEvents, getStateAtTime } from '@casbook/shared-logic';
 import { can, eventTypeToAction, BUSINESS_RULES } from '@casbook/shared-models';
 import { IEventRepository } from '../storage/repositories/event-repository.interface';
 import { IndexedDBEventRepository } from '../storage/repositories/indexed-db-event-repository.service';
+import { EventSyncService } from '../sync/event-sync.service';
 
 @Injectable({ providedIn: 'root' })
 export class CaseStore {
     private router = inject(Router);
     private eventRepository: IEventRepository = inject(IndexedDBEventRepository);
+    private syncService = inject(EventSyncService);
 
     readonly currentUser = signal<User>({
         id: 'user-investigator-1',
@@ -258,6 +260,12 @@ export class CaseStore {
     }
 
     selectCase(caseId: string | null): void {
+        // Unwatch previous case
+        const previousCaseId = this.uiState().currentCaseId;
+        if (previousCaseId) {
+            this.syncService.unwatchCase(previousCaseId);
+        }
+
         this.uiState.update(ui => ({
             ...ui,
             currentCaseId: caseId,
@@ -266,6 +274,7 @@ export class CaseStore {
         }));
 
         if (caseId) {
+            this.syncService.watchCase(caseId);
             this.router.navigate(['/cases', caseId]);
         } else {
             this.router.navigate(['/cases']);
@@ -322,6 +331,32 @@ export class CaseStore {
                 submittedBy: this.currentUser().id,
                 visibility,
                 tags,
+            },
+        };
+
+        return this.addEvent(event);
+    }
+
+    async createInvestigationPath(
+        caseId: string,
+        title: string,
+        description: string,
+        sequence: string[],
+        summary: string
+    ): Promise<{ success: boolean; error?: string }> {
+        const pathId = `path-${crypto.randomUUID().split('-')[0]}`;
+
+        const event = {
+            type: 'INVESTIGATION_PATH_CREATED' as const,
+            actorId: this.currentUser().id,
+            actorRole: this.currentUser().role,
+            payload: {
+                pathId,
+                caseId,
+                title,
+                description,
+                sequence,
+                summary,
             },
         };
 

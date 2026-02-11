@@ -1,6 +1,7 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { CaseStore } from '../../../core/state/case-store.service';
 import { UserRole } from '@casbook/shared-models';
 import { getSeverityColor } from '../../../shared/utils/contrast.util';
@@ -8,7 +9,7 @@ import { getSeverityColor } from '../../../shared/utils/contrast.util';
 @Component({
   selector: 'app-case-list',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   template: `
     <div class="container">
       <!-- Stats Grid -->
@@ -80,6 +81,7 @@ import { getSeverityColor } from '../../../shared/utils/contrast.util';
         <div
           class="brutal-card"
           style="border-style: dashed; display: flex; align-items: center; justify-content: center; background: #f0f0f0; cursor: pointer; min-height: 200px;"
+          (click)="showCreateModal.set(true)"
         >
           <div style="text-align: center;">
             <div style="font-size: 3rem;">➕</div>
@@ -93,6 +95,50 @@ import { getSeverityColor } from '../../../shared/utils/contrast.util';
         <div style="font-size: 4rem; margin-bottom: 10px;">📂</div>
         <h2>No Cases Yet</h2>
         <p style="margin-top: 10px;">Create your first investigation case to get started.</p>
+      </div>
+    </div>
+
+    <!-- Create Case Modal -->
+    <div *ngIf="showCreateModal()" class="modal-overlay" (click)="closeModal($event)">
+      <div class="brutal-card" style="width: 500px; max-width: 90vw; padding: 30px;" (click)="$event.stopPropagation()">
+        <h2 style="margin: 0 0 20px 0; border-bottom: 3px solid black; padding-bottom: 10px;">🆕 New Case</h2>
+
+        <div class="form-group">
+          <label>Case Title *</label>
+          <input type="text" [ngModel]="newTitle()" (ngModelChange)="newTitle.set($event)"
+                 placeholder="e.g., Unauthorized Network Access">
+        </div>
+
+        <div class="form-group">
+          <label>Description *</label>
+          <textarea [ngModel]="newDesc()" (ngModelChange)="newDesc.set($event)"
+                    placeholder="Describe the investigation..." rows="3"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Severity</label>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button *ngFor="let s of severities" class="brutal-btn"
+                    [style.background]="newSeverity() === s ? getSeverityColor(s) : '#eee'"
+                    [style.fontWeight]="newSeverity() === s ? '900' : '400'"
+                    (click)="newSeverity.set(s)">
+              {{ s | uppercase }}
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="createError()" style="color: red; font-weight: bold; margin: 10px 0;">
+          {{ createError() }}
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button class="brutal-btn" style="flex: 1;" (click)="showCreateModal.set(false)">Cancel</button>
+          <button class="brutal-btn" style="flex: 2; background: var(--lime);"
+                  [disabled]="!canCreate() || isCreating()"
+                  (click)="createNewCase()">
+            {{ isCreating() ? 'Creating...' : 'Create Case ⚡' }}
+          </button>
+        </div>
       </div>
     </div>
   `
@@ -110,6 +156,17 @@ export class CaseListComponent {
 
   getSeverityColor = getSeverityColor;
 
+  // Create case form state
+  showCreateModal = signal(false);
+  newTitle = signal('');
+  newDesc = signal('');
+  newSeverity = signal<'low' | 'medium' | 'high' | 'critical'>('medium');
+  isCreating = signal(false);
+  createError = signal('');
+  severities: Array<'low' | 'medium' | 'high' | 'critical'> = ['low', 'medium', 'high', 'critical'];
+
+  canCreate = () => this.newTitle().trim().length > 0 && this.newDesc().trim().length > 0;
+
   switchRole(event: Event): void {
     const role = (event.target as HTMLSelectElement).value as UserRole;
     this.store.switchRole(role);
@@ -117,6 +174,35 @@ export class CaseListComponent {
 
   selectCase(caseId: string): void {
     this.store.selectCase(caseId);
+  }
+
+  closeModal(event: Event): void {
+    if ((event.target as HTMLElement).classList.contains('modal-overlay')) {
+      this.showCreateModal.set(false);
+    }
+  }
+
+  async createNewCase(): Promise<void> {
+    if (!this.canCreate()) return;
+    this.isCreating.set(true);
+    this.createError.set('');
+
+    const result = await this.store.createCase(
+      this.newTitle().trim(),
+      this.newDesc().trim(),
+      this.newSeverity()
+    );
+
+    this.isCreating.set(false);
+
+    if (result.success) {
+      this.showCreateModal.set(false);
+      this.newTitle.set('');
+      this.newDesc.set('');
+      this.newSeverity.set('medium');
+    } else {
+      this.createError.set(result.error || 'Failed to create case');
+    }
   }
 
   formatDate(isoString: string): string {
@@ -127,3 +213,4 @@ export class CaseListComponent {
     });
   }
 }
+

@@ -2,12 +2,11 @@ import { Component, inject } from '@angular/core';
 import { CommonModule, TitleCasePipe } from '@angular/common';
 import { BoardStore } from '../../../core/state/board-store.service';
 import { CaseStore } from '../../../core/state/case-store.service';
-import { BrutalButtonComponent, GlassCardComponent } from '@casbook/shared-ui';
 
 @Component({
     selector: 'cb-board-toolbar',
     standalone: true,
-    imports: [CommonModule, BrutalButtonComponent, GlassCardComponent, TitleCasePipe],
+    imports: [CommonModule, TitleCasePipe],
     templateUrl: './board-toolbar.component.html',
     styleUrls: ['./board-toolbar.component.scss']
 })

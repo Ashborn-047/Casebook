@@ -1,2 +1,23 @@
-<app-nx-welcome></app-nx-welcome>
+<header class="cb-header">
+    <div class="nav-wrapper">
+        <a class="logo" routerLink="/cases">🔍 CASEBOOK</a>
+        <div class="header-controls">
+            <button class="brutal-btn" style="padding: 6px 12px; font-size: 0.8rem;" (click)="toggleFocusMode()"
+                [style.background]="focusMode() ? 'var(--pink)' : 'white'">
+                👁️ Focus
+            </button>
+            <div class="role-switcher">
+                <button class="role-btn" [class.active]="effectiveRole() === 'investigator'"
+                    (click)="switchRole('investigator')">Investigator</button>
+                <button class="role-btn" [class.active]="effectiveRole() === 'supervisor'"
+                    (click)="switchRole('supervisor')">Supervisor</button>
+                <button class="role-btn" [class.active]="effectiveRole() === 'viewer'"
+                    (click)="switchRole('viewer')">Viewer</button>
+            </div>
+        </div>
+    </div>
+</header>
+
 <router-outlet></router-outlet>
+
+<cb-command-palette [isOpen]="cmdPaletteOpen()" (closed)="cmdPaletteOpen.set(false)"></cb-command-palette>

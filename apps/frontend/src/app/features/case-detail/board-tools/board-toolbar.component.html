@@ -1,138 +1,106 @@
 <div class="toolbar-container">
     <!-- Mode Selector -->
     <section class="toolbar-section">
-        <h3 class="section-title">Tools</h3>
+        <h3 class="section-title">TOOLS</h3>
         <div class="mode-grid">
-            <cb-brutal-button (clicked)="setMode('select')" [variant]="mode() === 'select' ? 'primary' : 'ghost'"
-                size="sm" icon="🖱️">
-                Select
-            </cb-brutal-button>
-
-            <cb-brutal-button (clicked)="setMode('connect')" [variant]="mode() === 'connect' ? 'primary' : 'ghost'"
-                size="sm" icon="🔗">
-                Connect
-            </cb-brutal-button>
-
-            <cb-brutal-button (clicked)="setMode('hypothesis')"
-                [variant]="mode() === 'hypothesis' ? 'primary' : 'ghost'" size="sm" icon="💡">
-                Hypothesis
-            </cb-brutal-button>
-
-            <cb-brutal-button (clicked)="setMode('pan')" [variant]="mode() === 'pan' ? 'primary' : 'ghost'" size="sm"
-                icon="👆">
-                Pan
-            </cb-brutal-button>
+            <button class="brutal-btn tool-btn" [style.background]="mode() === 'select' ? 'var(--lime)' : 'white'"
+                (click)="setMode('select')">🖱️ Select</button>
+            <button class="brutal-btn tool-btn" [style.background]="mode() === 'connect' ? 'var(--blue)' : 'white'"
+                [style.color]="mode() === 'connect' ? 'white' : 'black'" (click)="setMode('connect')">🔗 Link</button>
+            <button class="brutal-btn tool-btn" [style.background]="mode() === 'hypothesis' ? 'var(--yellow)' : 'white'"
+                (click)="setMode('hypothesis')">💡 Hypo</button>
+            <button class="brutal-btn tool-btn" [style.background]="mode() === 'pan' ? 'var(--lavender)' : 'white'"
+                (click)="setMode('pan')">🤚 Pan</button>
+            <button class="brutal-btn tool-btn" [style.background]="mode() === 'delete' ? 'var(--pink)' : 'white'"
+                (click)="setMode('delete')">🗑️ Delete</button>
         </div>
     </section>
 
     <!-- View Controls -->
     <section class="toolbar-section">
-        <h3 class="section-title">View</h3>
-        <div class="control-group">
-            <div class="control-row">
-                <span class="control-label">Zoom: {{ (viewport().zoom * 100) | number:'1.0-0' }}%</span>
-                <div class="zoom-buttons">
-                    <cb-brutal-button (clicked)="zoom(-0.1)" size="sm" variant="ghost">-</cb-brutal-button>
-                    <cb-brutal-button (clicked)="resetViewport()" size="sm" variant="ghost">Reset</cb-brutal-button>
-                    <cb-brutal-button (clicked)="zoom(0.1)" size="sm" variant="ghost">+</cb-brutal-button>
-                </div>
+        <h3 class="section-title">VIEW</h3>
+        <div class="control-row">
+            <span class="control-label">Zoom: {{ (viewport().zoom * 100) | number:'1.0-0' }}%</span>
+            <div class="zoom-buttons">
+                <button class="brutal-btn mini-btn" (click)="zoom(-0.1)">−</button>
+                <button class="brutal-btn mini-btn" (click)="resetViewport()">⟳</button>
+                <button class="brutal-btn mini-btn" (click)="zoom(0.1)">+</button>
             </div>
+        </div>
 
+        <div class="control-row">
+            <span class="control-label">Grid</span>
+            <input type="checkbox" [checked]="tools().isGridVisible" (change)="toggleGrid()"
+                style="width: 20px; height: 20px;">
+        </div>
+
+        <div *ngIf="tools().isGridVisible" class="sub-controls">
             <div class="control-row">
-                <span class="control-label">Grid</span>
-                <label class="toggle">
-                    <input type="checkbox" [checked]="tools().isGridVisible" (change)="toggleGrid()">
-                    <span class="slider"></span>
-                </label>
+                <span class="control-label" style="font-size: 0.75rem;">Snap</span>
+                <input type="checkbox" [checked]="tools().isSnapToGrid" (change)="toggleSnapToGrid()"
+                    style="width: 16px; height: 16px;">
             </div>
-
-            <div *ngIf="tools().isGridVisible" class="sub-controls">
-                <div class="control-row">
-                    <span class="control-label small">Snap to Grid</span>
-                    <label class="toggle small">
-                        <input type="checkbox" [checked]="tools().isSnapToGrid" (change)="toggleSnapToGrid()">
-                        <span class="slider"></span>
-                    </label>
-                </div>
-
-                <div class="slider-control">
-                    <label class="control-label small">Grid Size: {{ tools().gridSize }}px</label>
-                    <input type="range" min="10" max="50" step="5" [value]="tools().gridSize"
-                        (input)="updateGridSize($event)" class="range-slider">
-                </div>
+            <div class="slider-control">
+                <span class="control-label" style="font-size: 0.75rem;">Size: {{ tools().gridSize }}px</span>
+                <input type="range" min="10" max="50" step="5" [value]="tools().gridSize"
+                    (input)="updateGridSize($event)" class="time-slider">
             </div>
         </div>
     </section>
 
     <!-- Connection Style -->
     <section class="toolbar-section">
-        <h3 class="section-title">Connections</h3>
-        <div class="control-group">
-            <div class="control-row">
-                <span class="control-label">Style</span>
-                <select [value]="tools().connectionStyle" (change)="updateConnectionStyle($event)" class="style-select">
-                    <option value="straight">Straight</option>
-                    <option value="bezier">Curved</option>
-                    <option value="orthogonal">Orthogonal</option>
-                </select>
-            </div>
-
-            <div class="control-row">
-                <span class="control-label">Show Labels</span>
-                <label class="toggle small">
-                    <input type="checkbox" [checked]="tools().showLabels" (change)="toggleLabels()">
-                    <span class="slider"></span>
-                </label>
-            </div>
+        <h3 class="section-title">CONNECTIONS</h3>
+        <div class="control-row">
+            <span class="control-label">Style</span>
+            <select [value]="tools().connectionStyle" (change)="updateConnectionStyle($event)">
+                <option value="straight">Straight</option>
+                <option value="bezier">Curved</option>
+                <option value="orthogonal">Orthogonal</option>
+            </select>
+        </div>
+        <div class="control-row">
+            <span class="control-label">Labels</span>
+            <input type="checkbox" [checked]="tools().showLabels" (change)="toggleLabels()"
+                style="width: 20px; height: 20px;">
         </div>
     </section>
 
     <!-- Actions -->
     <section class="toolbar-section">
-        <h3 class="section-title">Actions</h3>
+        <h3 class="section-title">ACTIONS</h3>
         <div class="action-buttons">
-            <cb-brutal-button (clicked)="saveLayout()" variant="secondary" size="sm" icon="💾" [disabled]="!canSave()">
-                Save Layout
-            </cb-brutal-button>
-
+            <button class="brutal-btn action-btn" style="background: var(--lime); width: 100%;" [disabled]="!canSave()"
+                (click)="saveLayout()">💾 Save</button>
             <div class="button-row">
-                <cb-brutal-button (clicked)="undo()" variant="ghost" size="sm" icon="↶" [disabled]="!canUndo()">
-                    Undo
-                </cb-brutal-button>
-
-                <cb-brutal-button (clicked)="redo()" variant="ghost" size="sm" icon="↷" [disabled]="!canRedo()">
-                    Redo
-                </cb-brutal-button>
+                <button class="brutal-btn mini-btn" [disabled]="!canUndo()" (click)="undo()">↶ Undo</button>
+                <button class="brutal-btn mini-btn" [disabled]="!canRedo()" (click)="redo()">↷ Redo</button>
             </div>
-
-            <cb-brutal-button (clicked)="autoArrange()" variant="ghost" size="sm" icon="🔀">
-                Auto Arrange
-            </cb-brutal-button>
+            <button class="brutal-btn action-btn" style="background: var(--orange); width: 100%;"
+                (click)="autoArrange()">🧹 Tidy Desk</button>
         </div>
     </section>
 
     <!-- Stats -->
     <section class="toolbar-section">
-        <cb-glass-card [blur]="true" additionalClasses="stats-card">
-            <h3 class="section-title">Board Stats</h3>
-            <div class="stats-grid">
-                <div class="stat-row">
-                    <span class="stat-label">Nodes:</span>
-                    <span class="stat-value">{{ nodes().length }}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Connections:</span>
-                    <span class="stat-value">{{ connections().length }}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Selected:</span>
-                    <span class="stat-value">{{ selectedNode() ? '1 node' : 'None' }}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Mode:</span>
-                    <span class="stat-value">{{ mode() | titlecase }}</span>
-                </div>
+        <h3 class="section-title">STATS</h3>
+        <div class="stats-grid-compact">
+            <div class="stat-row">
+                <span>Nodes</span>
+                <strong>{{ nodes().length }}</strong>
             </div>
-        </cb-glass-card>
+            <div class="stat-row">
+                <span>Links</span>
+                <strong>{{ connections().length }}</strong>
+            </div>
+            <div class="stat-row">
+                <span>Selected</span>
+                <strong>{{ selectedNode() ? '1' : '—' }}</strong>
+            </div>
+            <div class="stat-row">
+                <span>Mode</span>
+                <strong>{{ mode() | titlecase }}</strong>
+            </div>
+        </div>
     </section>
 </div>

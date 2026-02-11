@@ -1,69 +1,82 @@
-<div class="evidence-upload-overlay" (click)="cancel()">
-    <cb-glass-card additionalClasses="upload-card" (click)="$event.stopPropagation()">
-        <div class="header">
-            <h2>Add New Evidence</h2>
-            <p>Secure forensic upload with SHA-256 integrity check.</p>
+<div class="modal-overlay active" (click)="cancel()">
+    <div class="brutal-card modal-content" (click)="$event.stopPropagation()">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="margin: 0;">📎 Upload Evidence</h2>
+            <button (click)="cancel()"
+                style="border:none; background:none; cursor:pointer; font-size: 1.5rem;">✕</button>
         </div>
 
-        <div class="form-section">
+        <!-- Type Selector -->
+        <div class="form-group">
             <label>Evidence Type</label>
-            <div class="type-selector">
-                <button [class.active]="type() === 'text'" (click)="type.set('text')">TXT</button>
-                <button [class.active]="type() === 'file'" (click)="type.set('file')">FILE</button>
-                <button [class.active]="type() === 'url'" (click)="type.set('url')">URL</button>
-            </div>
-
-            <div class="input-content" [ngSwitch]="type()">
-                <div *ngSwitchCase="'text'">
-                    <label>Content</label>
-                    <textarea [(ngModel)]="content" placeholder="Enter evidence textual content..."></textarea>
-                </div>
-
-                <div *ngSwitchCase="'file'">
-                    <label>Select File</label>
-                    <div class="file-drop-zone">
-                        <input type="file" (change)="onFileSelected($event)" id="fileInput">
-                        <label for="fileInput" class="file-label">
-                            <span class="material-icons">cloud_upload</span>
-                            {{ selectedFile() ? selectedFile()?.name : 'Click to browse or drag file' }}
-                        </label>
-                    </div>
-                </div>
-
-                <div *ngSwitchCase="'url'">
-                    <label>Source URL</label>
-                    <input type="url" [(ngModel)]="content" placeholder="https://...">
-                </div>
-            </div>
-
-            <div class="meta-inputs">
-                <label>Forensic Description</label>
-                <input type="text" [(ngModel)]="description" placeholder="Short summary of this evidence...">
-
-                <label>Access Level</label>
-                <select [(ngModel)]="visibility">
-                    <option value="normal">Normal</option>
-                    <option value="restricted">Restricted (Supervisor Only)</option>
-                </select>
+            <div style="display: flex; gap: 5px;">
+                <button class="brutal-btn" style="flex: 1; padding: 8px;"
+                    [style.background]="type() === 'text' ? 'var(--lime)' : 'white'"
+                    (click)="type.set('text')">TXT</button>
+                <button class="brutal-btn" style="flex: 1; padding: 8px;"
+                    [style.background]="type() === 'file' ? 'var(--lime)' : 'white'"
+                    (click)="type.set('file')">FILE</button>
+                <button class="brutal-btn" style="flex: 1; padding: 8px;"
+                    [style.background]="type() === 'url' ? 'var(--lime)' : 'white'"
+                    (click)="type.set('url')">URL</button>
             </div>
         </div>
 
-        <div class="integrity-panel" *ngIf="computedHash() || isHashing()">
-            <div class="hash-status" [class.loading]="isHashing()">
-                <span class="material-icons">{{ isHashing() ? 'autorenew' : 'verified_user' }}</span>
-                <div class="hash-details">
-                    <strong>SHA-256 Fingerprint</strong>
-                    <code>{{ isHashing() ? 'Calculating hash...' : computedHash() }}</code>
+        <!-- Content Input -->
+        <div [ngSwitch]="type()">
+            <div *ngSwitchCase="'text'" class="form-group">
+                <label>Content</label>
+                <textarea rows="4" [ngModel]="content()" (ngModelChange)="content.set($event)"
+                    placeholder="Enter evidence textual content..."></textarea>
+            </div>
+
+            <div *ngSwitchCase="'file'">
+                <div class="drop-zone">
+                    <input type="file" (change)="onFileSelected($event)" id="fileInput" style="display: none;">
+                    <label for="fileInput" style="cursor: pointer; display: block;">
+                        <p style="font-weight: 900;">
+                            {{ selectedFile() ? selectedFile()?.name : 'DRAG & DROP FILES HERE' }}
+                        </p>
+                        <p style="font-size: 0.8rem; margin-top: 10px;">or click to browse</p>
+                    </label>
                 </div>
+            </div>
+
+            <div *ngSwitchCase="'url'" class="form-group">
+                <label>Source URL</label>
+                <input type="url" [ngModel]="content()" (ngModelChange)="content.set($event)" placeholder="https://...">
             </div>
         </div>
 
-        <div class="actions">
-            <cb-brutal-button (clicked)="cancel()" variant="ghost">Cancel</cb-brutal-button>
-            <cb-brutal-button (clicked)="submit()" variant="primary"
-                [disabled]="isHashing() || isSubmitting() || !content() || !description()">
-                {{ isSubmitting() ? 'Securing...' : 'Verify & Add' }}
-            </cb-brutal-button>
+        <!-- Description -->
+        <div class="form-group">
+            <label>Description</label>
+            <textarea rows="3" [ngModel]="description()" (ngModelChange)="description.set($event)"
+                placeholder="What does this evidence represent?"></textarea>
         </div>
-    </cb-glass-card>
+
+        <!-- Access Level -->
+        <div class="form-group" style="display: flex; gap: 10px; align-items: center;">
+            <input type="checkbox" style="width: 20px; height: 20px;" [checked]="visibility() === 'restricted'"
+                (change)="visibility.set(visibility() === 'restricted' ? 'normal' : 'restricted')">
+            <label style="margin-bottom: 0;">Mark as Restricted Access</label>
+        </div>
+
+        <!-- Hash Display -->
+        <div *ngIf="computedHash() || isHashing()" class="form-group">
+            <label>Integrity Hash</label>
+            <div class="hash-box mono">
+                {{ isHashing() ? '⏳ Calculating SHA-256...' : ('SHA256: ' + computedHash()) }}
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button class="brutal-btn" style="flex: 1;" (click)="cancel()">Cancel</button>
+            <button class="brutal-btn" style="flex: 2; background: var(--lime);"
+                [disabled]="isHashing() || isSubmitting() || !content() || !description()" (click)="submit()">
+                {{ isSubmitting() ? 'Securing...' : 'Submit Evidence ⚡' }}
+            </button>
+        </div>
+    </div>
 </div>

@@ -1,102 +1,598 @@
-// Tailwind directives
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* ============================================================
+   CASEBOOK — NEO-BRUTALIST DESIGN SYSTEM
+   ============================================================ */
 
-// Global CSS Variables
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&family=JetBrains+Mono:wght@500&display=swap');
+
 :root {
-  // Color Palette
-  --color-brutal-primary: #FF6B6B;
-  --color-brutal-secondary: #4ECDC4;
-  --color-brutal-accent: #FFE66D;
-  --color-brutal-dark: #2D3047;
-  --color-brutal-light: #F7F7F7;
-  
-  // Glassmorphism
-  --glass-bg: rgba(255, 255, 255, 0.1);
-  --glass-border: 1px solid rgba(255, 255, 255, 0.2);
-  --glass-blur: blur(10px);
-  
-  // Brutalism
-  --brutal-border: 4px solid #000;
-  --brutal-shadow: 8px 8px 0px #000;
-  
-  // Spacing
+  --bg: #FAFAF5;
+  --text: #000000;
+  --border: #000000;
+  --border-width: 3.5px;
+  --shadow: 4px 4px 0px #000000;
+  --shadow-hover: 2px 2px 0px #000000;
+
+  /* Neo-Brutalist Palette */
+  --lime: #A6F72E;
+  --pink: #FF6B9D;
+  --yellow: #FFE566;
+  --blue: #4E7CFF;
+  --orange: #FF8A47;
+  --lavender: #C4B5FD;
+  --dark-bg: #1A1A2E;
+
+  /* Status Colors */
+  --severity-low: #C4B5FD;
+  --severity-medium: #FFE566;
+  --severity-high: #FF8A47;
+  --severity-critical: #FF6B9D;
+
+  /* Spacing */
   --space-unit: 8px;
-  --radius-base: 12px;
-  --radius-brutal: 0px;
 }
 
-// Base Styles
+[data-theme="dark"] {
+  --bg: #121212;
+  --text: #FFFFFF;
+  --border: #FFFFFF;
+  --shadow: 4px 4px 0px #FFFFFF;
+  --shadow-hover: 2px 2px 0px #FFFFFF;
+}
+
+/* === RESET === */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  font-family: 'Space Grotesk', sans-serif;
+  -webkit-tap-highlight-color: transparent;
 }
 
-html, body {
-  @apply bg-brutal-light text-brutal-dark;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  transition: background 0.2s ease;
+  overflow-x: hidden;
+  min-height: 100vh;
 }
 
-// Utility Classes
-.glass-card {
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  border: var(--glass-border);
-  border-radius: var(--radius-base);
-  box-shadow: var(--glass-shadow);
+code,
+pre,
+.mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* === GLOBAL COMPONENTS === */
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  width: 100%;
 }
 
 .brutal-card {
-  border: var(--brutal-border);
-  border-radius: var(--radius-brutal);
-  box-shadow: var(--brutal-shadow);
+  background: white;
+  border: var(--border-width) solid var(--border);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  margin-bottom: 20px;
+  color: black;
+  position: relative;
+}
+
+.brutal-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  font-weight: bold;
+  text-transform: uppercase;
+  border: var(--border-width) solid var(--border);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: all 0.1s ease;
+  text-decoration: none;
+  color: black;
+  font-size: 0.9rem;
+  gap: 8px;
+  white-space: nowrap;
   background: white;
 }
 
-.brutal-button {
-  @apply font-bold px-6 py-3 transition-all duration-100;
-  border: var(--brutal-border);
-  box-shadow: var(--brutal-shadow);
-  
-  &:active {
-    transform: translate(4px, 4px);
-    box-shadow: 4px 4px 0px #000;
-  }
-  
-  &:disabled {
-    @apply opacity-50 cursor-not-allowed;
-    transform: none !important;
-    box-shadow: var(--brutal-shadow) !important;
-  }
+.brutal-btn:hover {
+  transform: translate(2px, 2px);
+  box-shadow: var(--shadow-hover);
 }
 
-// Role-specific colors
-.role-viewer { border-left: 4px solid #4ECDC4; }
-.role-investigator { border-left: 4px solid #FFE66D; }
-.role-supervisor { border-left: 4px solid #FF6B6D; }
+.brutal-btn:active {
+  transform: translate(4px, 4px);
+  box-shadow: none;
+}
 
-// Event type indicators
-.event-case { border-left: 4px solid #FFE66D; }
-.event-evidence { border-left: 4px solid #4ECDC4; }
-.event-note { border-left: 4px solid #A78BFA; }
+.brutal-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: var(--shadow) !important;
+}
 
-// Custom scrollbar
+.badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border: 2px solid var(--border);
+  font-weight: bold;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+/* === HEADER === */
+.cb-header {
+  border-bottom: var(--border-width) solid var(--border);
+  background: white;
+  padding: 15px 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.1);
+}
+
+.nav-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.header-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.logo {
+  font-size: 1.8rem;
+  font-weight: 900;
+  letter-spacing: -1px;
+  color: black;
+  text-decoration: none;
+}
+
+.role-switcher {
+  display: flex;
+  background: #eee;
+  border: var(--border-width) solid var(--border);
+  padding: 4px;
+}
+
+.role-btn {
+  padding: 6px 16px;
+  border: none;
+  background: none;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+
+.role-btn.active {
+  background: var(--blue);
+  color: white;
+  border: 2px solid black;
+}
+
+/* === NAVIGATION TABS === */
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin: 20px 0;
+  overflow-x: auto;
+  padding-bottom: 5px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+/* === STATS GRID === */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.stat-card:nth-child(1) {
+  background: var(--lime);
+}
+
+.stat-card:nth-child(2) {
+  background: var(--pink);
+}
+
+.stat-card:nth-child(3) {
+  background: var(--yellow);
+}
+
+.stat-card:nth-child(4) {
+  background: var(--lavender);
+}
+
+/* === CASE GRID === */
+.case-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 25px;
+}
+
+.case-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.case-card h3 {
+  margin-bottom: 10px;
+  font-size: 1.4rem;
+}
+
+.case-meta {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.dash-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.storage-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.status-dot {
+  width: 12px;
+  height: 12px;
+  background: var(--lime);
+  border: 2px solid black;
+  border-radius: 50%;
+}
+
+.status-dot.disconnected {
+  background: var(--pink);
+}
+
+/* === CASE DETAIL LAYOUT === */
+.case-detail-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 30px;
+}
+
+/* === TIMELINE === */
+.timeline {
+  position: relative;
+  padding-left: 40px;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 0;
+  bottom: 0;
+  width: var(--border-width);
+  background: var(--border);
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 30px;
+}
+
+.timeline-icon {
+  position: absolute;
+  left: -48px;
+  top: 0;
+  width: 40px;
+  height: 40px;
+  background: white;
+  border: var(--border-width) solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  z-index: 1;
+}
+
+.timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Chain of Custody Sticker */
+.sticker {
+  position: absolute;
+  top: -12px;
+  right: -10px;
+  background: #ffeb3b;
+  border: 2px solid black;
+  color: black;
+  padding: 2px 6px;
+  font-size: 0.6rem;
+  transform: rotate(5deg);
+  z-index: 5;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.1);
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+/* === FOCUS MODE === */
+body.focus-mode .cb-header {
+  opacity: 0.4;
+  filter: grayscale(80%);
+  /* Header stays interactive so user can toggle focus off */
+}
+
+body.focus-mode .tabs,
+body.focus-mode .stats-grid {
+  opacity: 0.15;
+  filter: grayscale(100%);
+  pointer-events: none;
+}
+
+body.focus-mode .active-work-area {
+  opacity: 1;
+  filter: none;
+  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.85);
+  z-index: 500;
+  position: relative;
+  background: var(--bg);
+  padding: 10px;
+  border: var(--border-width) dashed var(--border);
+}
+
+/* === FORM ELEMENTS === */
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 10px;
+  border: var(--border-width) solid var(--border);
+  font-family: inherit;
+  outline: none;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  background: #fffbe6;
+}
+
+/* === MODAL === */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-overlay.active {
+  display: flex;
+}
+
+.modal-content {
+  max-width: 500px;
+  width: 90%;
+  background: white;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.drop-zone {
+  border: 3px dashed var(--border);
+  padding: 40px;
+  text-align: center;
+  margin: 20px 0;
+  background: #f9f9f9;
+}
+
+.hash-box {
+  background: #eee;
+  padding: 10px;
+  font-size: 0.75rem;
+  border: 1px solid #ccc;
+  margin-top: 10px;
+  word-break: break-all;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* === COMMAND PALETTE === */
+.cmd-palette-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 2000;
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 15vh;
+}
+
+.cmd-palette-overlay.active {
+  display: flex;
+}
+
+.cmd-palette-box {
+  width: 600px;
+  max-width: 90%;
+  background: var(--bg);
+  border: 4px solid black;
+  box-shadow: 10px 10px 0 black;
+}
+
+.cmd-input {
+  width: 100%;
+  padding: 20px;
+  font-size: 1.5rem;
+  border: none;
+  border-bottom: 4px solid black;
+  outline: none;
+  background: white;
+  font-family: inherit;
+}
+
+.cmd-results {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.cmd-item {
+  padding: 15px 20px;
+  border-bottom: 1px solid #ccc;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+}
+
+.cmd-item:hover {
+  background: var(--lime);
+}
+
+.cmd-shortcut {
+  background: black;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* === SCROLLBAR === */
 ::-webkit-scrollbar {
   width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-gray-100;
+  background: #f1f1f1;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-brutal-primary rounded-full;
+  background: var(--pink);
+  border: 1px solid black;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-red-500;
+  background: #ff4081;
+}
+
+/* === ACCESSIBILITY: Reduced Motion === */
+@media (prefers-reduced-motion: reduce) {
+  .brutal-btn:hover {
+    transform: none;
+  }
+
+  .brutal-btn:active {
+    transform: none;
+  }
+
+  * {
+    animation-duration: 0s !important;
+    transition-duration: 0s !important;
+  }
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 900px) {
+  .case-detail-layout {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .nav-wrapper {
+    flex-direction: column;
+    gap: 15px;
+    padding-bottom: 5px;
+  }
+
+  .header-controls {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .role-switcher {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .logo {
+    font-size: 1.5rem;
+  }
+
+  .brutal-btn {
+    font-size: 0.8rem;
+    padding: 10px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .role-btn {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+  }
+
+  .cmd-input {
+    font-size: 1.1rem;
+    padding: 15px;
+  }
+
+  .cmd-shortcut {
+    display: none;
+  }
 }

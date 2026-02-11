@@ -11,12 +11,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CaseStore } from '../../../../core/state/case-store.service';
 import { Evidence, InvestigationPath } from '@casbook/shared-models';
-import { GlassCardComponent } from '@casbook/shared-ui';
 
 @Component({
     selector: 'cb-path-creator',
     standalone: true,
-    imports: [CommonModule, FormsModule, GlassCardComponent],
+    imports: [CommonModule, FormsModule],
     templateUrl: './path-creator.component.html',
     styleUrls: ['./path-creator.component.scss'],
 })

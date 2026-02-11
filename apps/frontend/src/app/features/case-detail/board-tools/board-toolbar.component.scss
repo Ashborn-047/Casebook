@@ -1,185 +1,91 @@
 .toolbar-container {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    padding: 16px;
-}
-
-.toolbar-section {
-    padding-bottom: 16px;
-    border-bottom: 1px solid #e5e7eb;
-
-    &:last-child {
-        border-bottom: none;
-        padding-bottom: 0;
-    }
+    gap: 15px;
+    padding: 5px;
 }
 
 .section-title {
-    font-size: 13px;
-    font-weight: 700;
-    color: #374151;
-    margin-bottom: 12px;
+    font-size: 0.7rem;
+    font-weight: 900;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    border-bottom: 2px solid black;
+    padding-bottom: 5px;
+}
+
+.toolbar-section {
+    margin-bottom: 5px;
 }
 
 .mode-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-}
-
-.control-group {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 6px;
+}
+
+.tool-btn {
+    width: 100%;
+    padding: 8px 12px !important;
+    font-size: 0.8rem !important;
+    justify-content: flex-start !important;
 }
 
 .control-row {
     display: flex;
-    align-items: center;
     justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
 }
 
 .control-label {
-    font-size: 14px;
-    color: #4b5563;
-
-    &.small {
-        font-size: 12px;
-    }
+    font-size: 0.8rem;
+    font-weight: bold;
 }
 
-.sub-controls {
-    padding-left: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-// Toggle switch
-.toggle {
-    position: relative;
-    display: inline-flex;
-    cursor: pointer;
-
-    input {
-        position: absolute;
-        opacity: 0;
-        width: 0;
-        height: 0;
-    }
-
-    .slider {
-        width: 36px;
-        height: 20px;
-        background: #d1d5db;
-        border-radius: 10px;
-        position: relative;
-        transition: background 0.2s ease;
-
-        &::after {
-            content: '';
-            position: absolute;
-            width: 16px;
-            height: 16px;
-            background: white;
-            border-radius: 50%;
-            top: 2px;
-            left: 2px;
-            transition: transform 0.2s ease;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-        }
-    }
-
-    input:checked+.slider {
-        background: #3b82f6;
-
-        &::after {
-            transform: translateX(16px);
-        }
-    }
-
-    &.small .slider {
-        width: 32px;
-        height: 16px;
-
-        &::after {
-            width: 12px;
-            height: 12px;
-        }
-    }
-
-    &.small input:checked+.slider::after {
-        transform: translateX(16px);
-    }
-}
-
-// Slider
-.slider-control {
-    margin-top: 4px;
-}
-
-.range-slider {
-    width: 100%;
-    height: 6px;
-    background: #e5e7eb;
-    border-radius: 3px;
-    appearance: none;
-    cursor: pointer;
-    margin-top: 4px;
-
-    &::-webkit-slider-thumb {
-        appearance: none;
-        width: 14px;
-        height: 14px;
-        background: #3b82f6;
-        border-radius: 50%;
-        cursor: pointer;
-    }
-}
-
-// Select
-.style-select {
-    padding: 6px 10px;
-    font-size: 13px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    background: white;
-    cursor: pointer;
-    min-width: 100px;
-
-    &:focus {
-        outline: none;
-        border-color: #3b82f6;
-    }
-}
-
-// Zoom buttons
 .zoom-buttons {
     display: flex;
     gap: 4px;
 }
 
-// Action buttons
+.mini-btn {
+    padding: 4px 10px !important;
+    font-size: 0.75rem !important;
+}
+
+.sub-controls {
+    padding-left: 10px;
+    border-left: 2px solid #ccc;
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
+.slider-control {
+    margin-top: 5px;
+}
+
 .action-buttons {
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
 
+.action-btn {
+    padding: 8px 12px !important;
+    font-size: 0.8rem !important;
+}
+
 .button-row {
     display: flex;
-    gap: 8px;
+    gap: 6px;
 }
 
-// Stats card
-.stats-card {
-    padding: 12px;
+.button-row .mini-btn {
+    flex: 1;
 }
 
-.stats-grid {
+.stats-grid-compact {
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -188,14 +94,5 @@
 .stat-row {
     display: flex;
     justify-content: space-between;
-    font-size: 12px;
-}
-
-.stat-label {
-    color: #6b7280;
-}
-
-.stat-value {
-    font-weight: 600;
-    color: #111827;
+    font-size: 0.8rem;
 }

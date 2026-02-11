@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CaseStore } from '../../../core/state/case-store.service';
 import { HashService } from '@casbook/shared-utils';
-import { BrutalButtonComponent, GlassCardComponent } from '@casbook/shared-ui';
 
 /**
  * EvidenceUploadComponent
@@ -15,7 +14,7 @@ import { BrutalButtonComponent, GlassCardComponent } from '@casbook/shared-ui';
 @Component({
     selector: 'cb-evidence-upload',
     standalone: true,
-    imports: [CommonModule, FormsModule, BrutalButtonComponent, GlassCardComponent],
+    imports: [CommonModule, FormsModule],
     templateUrl: './evidence-upload.component.html',
     styleUrls: ['./evidence-upload.component.scss']
 })

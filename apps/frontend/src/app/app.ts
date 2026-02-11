@@ -1,19 +1,52 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal, HostListener } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { NxWelcome } from './nx-welcome';
+import { CommonModule } from '@angular/common';
 import { EventSyncService } from './core/sync/event-sync.service';
+import { CaseStore } from './core/state/case-store.service';
+import { CommandPaletteComponent } from './shared/command-palette/command-palette.component';
+import { UserRole } from '@casbook/shared-models';
 
 @Component({
-  imports: [NxWelcome, RouterModule],
+  imports: [RouterModule, CommonModule, CommandPaletteComponent],
   selector: 'app-root',
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
 export class App implements OnInit {
-  protected title = 'frontend';
   private syncService = inject(EventSyncService);
+  store = inject(CaseStore);
+
+  focusMode = signal(false);
+  cmdPaletteOpen = signal(false);
+
+  effectiveRole = () =>
+    this.store.uiState().roleOverride || this.store.currentUser().role;
 
   ngOnInit(): void {
     this.syncService.initialize();
+  }
+
+  toggleFocusMode(): void {
+    this.focusMode.update(v => !v);
+    if (this.focusMode()) {
+      document.body.classList.add('focus-mode');
+    } else {
+      document.body.classList.remove('focus-mode');
+    }
+  }
+
+  switchRole(role: string): void {
+    this.store.switchRole(role as UserRole);
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onKeyDown(event: KeyboardEvent): void {
+    if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+      event.preventDefault();
+      this.cmdPaletteOpen.update(v => !v);
+    }
+    if (event.key === 'Escape') {
+      this.cmdPaletteOpen.set(false);
+    }
   }
 }

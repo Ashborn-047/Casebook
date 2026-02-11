@@ -1,26 +1,11 @@
 import { Injectable } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { IEventRepository } from './event-repository.interface';
-import {
-    AppEvent,
-    CaseCreatedEvent,
-    EvidenceAddedEvent,
-    NoteAddedEvent,
-    EvidenceConnectedEvent,
-    HypothesisCreatedEvent
-} from '@casbook/shared-models';
+import { AppEvent } from '@casbook/shared-models';
 import { CaseState } from '@casbook/shared-models';
 import { reduceEvents } from '@casbook/shared-logic';
 
-const now = new Date().toISOString();
 
-function uuid(): string {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-    });
-}
 
 @Injectable({ providedIn: 'root' })
 export class InMemoryEventRepository implements IEventRepository {
@@ -165,111 +150,7 @@ export class InMemoryEventRepository implements IEventRepository {
     }
 
     private async loadDemoData(): Promise<void> {
-        const caseCreated: CaseCreatedEvent = {
-            id: uuid(),
-            type: 'CASE_CREATED',
-            actorId: 'user-supervisor-1',
-            actorRole: 'supervisor',
-            occurredAt: now,
-            payload: {
-                caseId: 'case-1',
-                title: 'Unauthorized HR System Access',
-                description: 'Multiple unauthorized login attempts detected in HR system logs',
-                createdBy: 'user-supervisor-1',
-                severity: 'high',
-                tags: ['security', 'hr', 'login'],
-            },
-        };
-
-        const ev1Added: EvidenceAddedEvent = {
-            id: uuid(),
-            type: 'EVIDENCE_ADDED',
-            actorId: 'user-investigator-1',
-            actorRole: 'investigator',
-            occurredAt: now,
-            payload: {
-                evidenceId: 'ev-1',
-                caseId: 'case-1',
-                type: 'text',
-                content: 'Log entries showing 15 failed login attempts from IP 192.168.1.100',
-                hash: 'a1b2c3d4e5f6789012345678901234567890',
-                description: 'Server authentication logs',
-                submittedBy: 'user-investigator-1',
-                visibility: 'normal',
-                tags: ['logs', 'authentication'],
-            },
-        };
-
-        const ev2Added: EvidenceAddedEvent = {
-            id: uuid(),
-            type: 'EVIDENCE_ADDED',
-            actorId: 'user-investigator-1',
-            actorRole: 'investigator',
-            occurredAt: now,
-            payload: {
-                evidenceId: 'ev-2',
-                caseId: 'case-1',
-                type: 'text',
-                content: 'IP geolocation shows origin from external network',
-                hash: 'b2c3d4e5f67890123456789012345678901',
-                description: 'IP analysis report',
-                submittedBy: 'user-investigator-1',
-                visibility: 'normal',
-                tags: ['ip', 'network'],
-            },
-        };
-
-        const noteAdded: NoteAddedEvent = {
-            id: uuid(),
-            type: 'NOTE_ADDED',
-            actorId: 'user-investigator-1',
-            actorRole: 'investigator',
-            occurredAt: now,
-            payload: {
-                noteId: 'note-1',
-                caseId: 'case-1',
-                content: 'Initial analysis suggests brute force attack',
-                addedBy: 'user-investigator-1',
-                isInternal: true,
-            },
-        };
-
-        const connected: EvidenceConnectedEvent = {
-            id: uuid(),
-            type: 'EVIDENCE_CONNECTED',
-            actorId: 'user-investigator-1',
-            actorRole: 'investigator',
-            occurredAt: now,
-            payload: {
-                connectionId: 'conn-1',
-                caseId: 'case-1',
-                sourceEvidenceId: 'ev-1',
-                targetEvidenceId: 'ev-2',
-                connectionType: 'timeline',
-                reason: 'Log entries show sequence of events',
-                strength: 2,
-                notes: 'Timeline connection between login attempts',
-            },
-        };
-
-        const hypCreated: HypothesisCreatedEvent = {
-            id: uuid(),
-            type: 'HYPOTHESIS_CREATED',
-            actorId: 'user-investigator-1',
-            actorRole: 'investigator',
-            occurredAt: now,
-            payload: {
-                hypothesisId: 'hyp-1',
-                caseId: 'case-1',
-                title: 'Brute Force Attack Hypothesis',
-                description: 'Multiple failed logins suggest automated brute force attempt',
-                supportingEvidenceIds: ['ev-1', 'ev-2'],
-                confidence: 'high',
-                status: 'active',
-                color: '#DC2626',
-            },
-        };
-
-        this.events = [caseCreated, ev1Added, ev2Added, noteAdded, connected, hypCreated];
+        // No demo data — app starts clean
+        this.events = [];
     }
 }

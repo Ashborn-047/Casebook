@@ -1,27 +1,12 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { IEventRepository } from './event-repository.interface';
-import {
-    AppEvent,
-    CaseCreatedEvent,
-    EvidenceAddedEvent,
-    NoteAddedEvent,
-    EvidenceConnectedEvent,
-    HypothesisCreatedEvent
-} from '@casbook/shared-models';
+import { AppEvent } from '@casbook/shared-models';
 import { CaseState } from '@casbook/shared-models';
 import { reduceEvents } from '@casbook/shared-logic';
 import { MigrationService } from '../migration.service';
 
-const now = new Date().toISOString();
 
-function uuid(): string {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-    });
-}
 
 @Injectable({ providedIn: 'root' })
 export class IndexedDBEventRepository implements IEventRepository {
@@ -30,7 +15,7 @@ export class IndexedDBEventRepository implements IEventRepository {
     private db: IDBDatabase | null = null;
     private initialized = false;
     private readonly DB_NAME = 'casbook-events';
-    private readonly DB_VERSION = 1;
+    private readonly DB_VERSION = 2;
 
     async initialize(): Promise<void> {
         if (this.initialized) return;
@@ -233,134 +218,35 @@ export class IndexedDBEventRepository implements IEventRepository {
 
             request.onupgradeneeded = (event) => {
                 const db = (event.target as IDBOpenDBRequest).result;
+                const oldVersion = event.oldVersion;
 
-                if (!db.objectStoreNames.contains('events')) {
+                // v0→v1: create stores
+                if (oldVersion < 1) {
                     const eventsStore = db.createObjectStore('events', { keyPath: 'id' });
                     eventsStore.createIndex('type', 'type', { unique: false });
                     eventsStore.createIndex('occurredAt', 'occurredAt', { unique: false });
+
+                    if (!db.objectStoreNames.contains('snapshots')) {
+                        db.createObjectStore('snapshots', { keyPath: 'caseId' });
+                    }
+                    if (!db.objectStoreNames.contains('metadata')) {
+                        db.createObjectStore('metadata', { keyPath: 'key' });
+                    }
                 }
 
-                if (!db.objectStoreNames.contains('snapshots')) {
-                    db.createObjectStore('snapshots', { keyPath: 'caseId' });
-                }
-
-                if (!db.objectStoreNames.contains('metadata')) {
-                    db.createObjectStore('metadata', { keyPath: 'key' });
+                // v1→v2: purge hardcoded demo data
+                if (oldVersion >= 1 && oldVersion < 2) {
+                    const tx = (event.target as IDBOpenDBRequest).transaction!;
+                    const eventsStore = tx.objectStore('events');
+                    eventsStore.clear();
+                    console.log('Cleared old demo data during v1→v2 upgrade');
                 }
             };
         });
     }
 
     private async loadDemoData(): Promise<void> {
-        const caseCreated: CaseCreatedEvent = {
-            id: uuid(),
-            type: 'CASE_CREATED',
-            actorId: 'user-supervisor-1',
-            actorRole: 'supervisor',
-            occurredAt: now,
-            payload: {
-                caseId: 'case-1',
-                title: 'Unauthorized HR System Access',
-                description: 'Multiple unauthorized login attempts detected in HR system logs',
-                createdBy: 'user-supervisor-1',
-                severity: 'high',
-                tags: ['security', 'hr', 'login'],
-            },
-        };
-
-        const ev1Added: EvidenceAddedEvent = {
-            id: uuid(),
-            type: 'EVIDENCE_ADDED',
-            actorId: 'user-investigator-1',
-            actorRole: 'investigator',
-            occurredAt: now,
-            payload: {
-                evidenceId: 'ev-1',
-                caseId: 'case-1',
-                type: 'text',
-                content: 'Log entries showing 15 failed login attempts from IP 192.168.1.100',
-                hash: 'a1b2c3d4e5f6789012345678901234567890',
-                description: 'Server authentication logs',
-                submittedBy: 'user-investigator-1',
-                visibility: 'normal',
-                tags: ['logs', 'authentication'],
-            },
-        };
-
-        const ev2Added: EvidenceAddedEvent = {
-            id: uuid(),
-            type: 'EVIDENCE_ADDED',
-            actorId: 'user-investigator-1',
-            actorRole: 'investigator',
-            occurredAt: now,
-            payload: {
-                evidenceId: 'ev-2',
-                caseId: 'case-1',
-                type: 'text',
-                content: 'IP geolocation shows origin from external network',
-                hash: 'b2c3d4e5f67890123456789012345678901',
-                description: 'IP analysis report',
-                submittedBy: 'user-investigator-1',
-                visibility: 'normal',
-                tags: ['ip', 'network'],
-            },
-        };
-
-        const noteAdded: NoteAddedEvent = {
-            id: uuid(),
-            type: 'NOTE_ADDED',
-            actorId: 'user-investigator-1',
-            actorRole: 'investigator',
-            occurredAt: now,
-            payload: {
-                noteId: 'note-1',
-                caseId: 'case-1',
-                content: 'Initial analysis suggests brute force attack',
-                addedBy: 'user-investigator-1',
-                isInternal: true,
-            },
-        };
-
-        const connected: EvidenceConnectedEvent = {
-            id: uuid(),
-            type: 'EVIDENCE_CONNECTED',
-            actorId: 'user-investigator-1',
-            actorRole: 'investigator',
-            occurredAt: now,
-            payload: {
-                connectionId: 'conn-1',
-                caseId: 'case-1',
-                sourceEvidenceId: 'ev-1',
-                targetEvidenceId: 'ev-2',
-                connectionType: 'timeline',
-                reason: 'Log entries show sequence of events',
-                strength: 2,
-                notes: 'Timeline connection between login attempts',
-            },
-        };
-
-        const hypCreated: HypothesisCreatedEvent = {
-            id: uuid(),
-            type: 'HYPOTHESIS_CREATED',
-            actorId: 'user-investigator-1',
-            actorRole: 'investigator',
-            occurredAt: now,
-            payload: {
-                hypothesisId: 'hyp-1',
-                caseId: 'case-1',
-                title: 'Brute Force Attack Hypothesis',
-                description: 'Multiple failed logins suggest automated brute force attempt',
-                supportingEvidenceIds: ['ev-1', 'ev-2'],
-                confidence: 'high',
-                status: 'active',
-                color: '#DC2626',
-            },
-        };
-
-        const demoEvents = [caseCreated, ev1Added, ev2Added, noteAdded, connected, hypCreated];
-        for (const event of demoEvents) {
-            await this.saveEvent(event);
-        }
-        console.log('Loaded demo data into IndexedDB');
+        // No demo data — app starts clean
+        console.log('IndexedDB initialized with empty database');
     }
 }

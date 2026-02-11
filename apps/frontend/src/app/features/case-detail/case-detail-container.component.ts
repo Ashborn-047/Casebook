@@ -3,12 +3,6 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { CaseStore } from '../../core/state/case-store.service';
 import { BoardStore } from '../../core/state/board-store.service';
-import {
-  GlassCardComponent,
-  BrutalButtonComponent,
-  RoleBadgeComponent,
-  TimelineItemComponent
-} from '@casbook/shared-ui';
 import { UserRole } from '@casbook/shared-models';
 import { InvestigationBoardComponent } from './investigation-board/investigation-board.component';
 import { BoardToolbarComponent } from './board-tools/board-toolbar.component';
@@ -17,6 +11,7 @@ import { TimeTravelDebuggerComponent } from '../time-travel/time-travel-debugger
 import { TimeTravelStore } from '../time-travel/time-travel.store';
 import { JsonExportService } from '@casbook/shared-utils';
 import { PdfExportService } from '@casbook/shared-utils';
+import { getSeverityColor } from '../../shared/utils/contrast.util';
 
 @Component({
   selector: 'app-case-detail-container',
@@ -24,311 +19,244 @@ import { PdfExportService } from '@casbook/shared-utils';
   imports: [
     CommonModule,
     RouterModule,
-    GlassCardComponent,
-    BrutalButtonComponent,
-    RoleBadgeComponent,
-    TimelineItemComponent,
     InvestigationBoardComponent,
     BoardToolbarComponent,
     EvidenceUploadComponent,
     TimeTravelDebuggerComponent
   ],
   template: `
-    <div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
-      <!-- Header -->
-      <header class="max-w-6xl mx-auto mb-8" [class.max-w-none]="viewMode() === 'board'">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-4">
-            <cb-brutal-button variant="ghost" size="sm" icon="←" (clicked)="goBack()">
-              Back to Cases
-            </cb-brutal-button>
-            <div *ngIf="currentCase()">
-              <h1 class="text-2xl font-bold text-brutal-dark">{{ caseTitle }}</h1>
-              <p class="text-gray-500">{{ caseDescription }}</p>
-            </div>
-          </div>
-          
-          <div class="flex items-center gap-3">
-            <!-- Save Board Layout Button (only in board view) -->
-            <cb-brutal-button 
-              *ngIf="viewMode() === 'board'" 
-              variant="secondary" 
-              size="sm" 
-              icon="💾"
-              (clicked)="saveBoardLayout()"
-              [disabled]="!canUpdateLayout"
-            >
-              Save Layout
-            </cb-brutal-button>
-            
-            <cb-role-badge [role]="effectiveRole()"></cb-role-badge>
-            
-            <!-- Audit Export Buttons -->
-            <div class="flex items-center gap-2 border-l-2 border-brutal-dark pl-3 ml-2">
-              <cb-brutal-button 
-                variant="ghost" 
-                size="sm" 
-                icon="📄" 
-                (clicked)="exportJson()" 
-                title="Export JSON Audit"
-              ></cb-brutal-button>
-              <cb-brutal-button 
-                variant="ghost" 
-                size="sm" 
-                icon="📕" 
-                (clicked)="exportPdf()" 
-                title="Export PDF Report"
-              ></cb-brutal-button>
-            </div>
-            
-            <!-- Role Switcher -->
-            <select 
-              class="px-3 py-2 rounded-lg border-2 border-brutal-dark bg-white text-sm"
-              [value]="effectiveRole()"
-              (change)="switchRole($event)"
-            >
-              <option value="viewer">👁️ Viewer</option>
-              <option value="investigator">🔍 Investigator</option>
-              <option value="supervisor">⭐ Supervisor</option>
-            </select>
-          </div>
-        </div>
-      </header>
+    <div class="container">
+      <!-- View Mode Tabs -->
+      <div class="tabs">
+        <button class="brutal-btn"
+          [style.background]="viewMode() === 'timeline' ? 'var(--lime)' : 'white'"
+          (click)="setViewMode('timeline')">📋 Timeline</button>
+        <button class="brutal-btn"
+          [style.background]="viewMode() === 'board' ? 'var(--yellow)' : 'white'"
+          [disabled]="!canViewBoard"
+          (click)="setViewMode('board')">🧠 Board</button>
+        <button class="brutal-btn"
+          [style.background]="showTimeTravel() ? 'var(--orange)' : 'white'"
+          [disabled]="!canTimeTravel"
+          (click)="showTimeTravel.set(!showTimeTravel())">⏳ Time Travel</button>
+        <button class="brutal-btn"
+          style="background: var(--pink);"
+          *ngIf="canAddEvidence"
+          (click)="showUpload.set(true)">📎 Upload</button>
+        <button class="brutal-btn" (click)="goBack()">← Back</button>
 
-      <!-- View Mode Switcher -->
-      <div class="max-w-6xl mx-auto mb-6" [class.max-w-none]="viewMode() === 'board'">
-        <div class="flex gap-2">
-          <cb-brutal-button 
-            (clicked)="setViewMode('timeline')"
-            [variant]="viewMode() === 'timeline' ? 'primary' : 'ghost'"
-            size="sm"
-            icon="📋"
-          >
-            Timeline View
-          </cb-brutal-button>
-          
-          <cb-brutal-button 
-            (clicked)="setViewMode('board')"
-            [variant]="viewMode() === 'board' ? 'primary' : 'ghost'"
-            size="sm"
-            icon="🧠"
-            [disabled]="!canViewBoard"
-          >
-            Investigation Board
-          </cb-brutal-button>
+        <!-- Export Buttons -->
+        <button class="brutal-btn" title="Export JSON" (click)="exportJson()">📄 JSON</button>
+        <button class="brutal-btn" title="Export PDF" (click)="exportPdf()">📕 PDF</button>
 
-          <cb-brutal-button 
-            (clicked)="showTimeTravel.set(!showTimeTravel())"
-            [variant]="showTimeTravel() ? 'primary' : 'ghost'"
-            size="sm"
-            icon="⏳"
-            [disabled]="!canTimeTravel"
-          >
-            Time Travel Replay
-          </cb-brutal-button>
-        </div>
-        
-        <div class="flex items-center" *ngIf="canAddEvidence">
-          <cb-brutal-button 
-            variant="primary" 
-            size="sm" 
-            icon="+" 
-            (clicked)="showUpload.set(true)"
-          >
-            Add Evidence
-          </cb-brutal-button>
-        </div>
+        <!-- Save Board Layout (only in board view) -->
+        <button class="brutal-btn"
+          *ngIf="viewMode() === 'board'"
+          [disabled]="!canUpdateLayout"
+          style="background: var(--blue); color: white;"
+          (click)="saveBoardLayout()">💾 Save Layout</button>
       </div>
 
-      <!-- Time Travel Debugger UI overlay or inline -->
-      <div *ngIf="showTimeTravel()" class="max-w-6xl mx-auto mb-6">
+      <!-- Time Travel Debugger -->
+      <div *ngIf="showTimeTravel()" style="margin-bottom: 20px;">
         <cb-time-travel-debugger></cb-time-travel-debugger>
       </div>
 
-      <!-- Loading State -->
-      <div *ngIf="store.uiState().isLoading" class="max-w-6xl mx-auto">
-        <cb-glass-card additionalClasses="p-8 text-center">
-          <div class="animate-pulse">Loading case details...</div>
-        </cb-glass-card>
+      <!-- Loading -->
+      <div *ngIf="store.uiState().isLoading" class="brutal-card" style="text-align: center; padding: 40px;">
+        Loading case details...
       </div>
 
       <!-- Case Not Found -->
-      <div *ngIf="!store.uiState().isLoading && !currentCase()" class="max-w-6xl mx-auto">
-        <cb-glass-card additionalClasses="p-8 text-center">
-          <div class="text-4xl mb-4">🔍</div>
-          <h2 class="text-xl font-bold mb-2">Case Not Found</h2>
-          <p class="text-gray-500">The requested case could not be found.</p>
-        </cb-glass-card>
+      <div *ngIf="!store.uiState().isLoading && !currentCase()" class="brutal-card" style="text-align: center; padding: 40px;">
+        <div style="font-size: 4rem; margin-bottom: 10px;">🔍</div>
+        <h2>Case Not Found</h2>
+        <p style="margin-top: 10px;">The requested case could not be found.</p>
       </div>
 
       <!-- Main Content -->
-      <div *ngIf="!store.uiState().isLoading && currentCase()" 
-           class="mx-auto"
-           [class.max-w-6xl]="viewMode() === 'timeline'"
-           [class.max-w-none]="viewMode() === 'board'">
-        
-        <!-- Timeline View -->
-        <div *ngIf="viewMode() === 'timeline'" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Timeline Column -->
-          <div class="lg:col-span-2 space-y-1">
-            <h2 class="text-lg font-semibold mb-4">📅 Activity Timeline</h2>
-            <div *ngFor="let entry of timeline(); let last = last">
-              <cb-timeline-item [entry]="entry" [isLast]="last"></cb-timeline-item>
-            </div>
-            <cb-glass-card *ngIf="timeline().length === 0" additionalClasses="p-6 text-center">
-              <p class="text-gray-500">No timeline events yet.</p>
-            </cb-glass-card>
-          </div>
-          
+      <div *ngIf="!store.uiState().isLoading && currentCase()">
+
+        <!-- ==================== TIMELINE VIEW ==================== -->
+        <div *ngIf="viewMode() === 'timeline'" class="case-detail-layout">
           <!-- Sidebar -->
-          <div class="space-y-6">
-            <!-- Case Stats -->
-            <cb-glass-card additionalClasses="p-5">
-              <h3 class="font-semibold mb-4">📊 Case Statistics</h3>
-              <div class="space-y-3">
-                <div class="flex justify-between">
-                  <span class="text-gray-600">Evidence</span>
-                  <span class="font-bold">{{ evidenceCount }}</span>
+          <aside>
+            <div class="brutal-card" style="background: var(--lavender)">
+              <h2 style="margin-bottom: 10px;">Case Info</h2>
+              <div class="form-group">
+                <label>Title</label>
+                <p style="font-weight: bold;">{{ caseTitle }}</p>
+              </div>
+              <div class="form-group">
+                <label>Severity</label>
+                <span class="badge" [style.background]="getSeverityColor(currentCase()?.severity || 'low')">
+                  {{ currentCase()?.severity | uppercase }}
+                </span>
+              </div>
+              <div class="form-group">
+                <label>Status</label>
+                <p>{{ currentCase()?.status | uppercase }} ({{ daysOpen }} Days Open)</p>
+              </div>
+              <div class="form-group">
+                <label>Description</label>
+                <p style="font-size: 0.85rem;">{{ caseDescription }}</p>
+              </div>
+              <hr style="border: 1px solid black; margin: 15px 0;">
+
+              <!-- Case Stats -->
+              <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem;">
+                <div style="display: flex; justify-content: space-between;">
+                  <span>📎 Evidence</span>
+                  <strong>{{ evidenceCount }}</strong>
                 </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-600">Connections</span>
-                  <span class="font-bold text-indigo-600">{{ connectionCount }}</span>
+                <div style="display: flex; justify-content: space-between;">
+                  <span>🔗 Connections</span>
+                  <strong>{{ connectionCount }}</strong>
                 </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-600">Active Hypotheses</span>
-                  <span class="font-bold text-green-600">{{ activeHypothesisCount }}</span>
+                <div style="display: flex; justify-content: space-between;">
+                  <span>💡 Hypotheses</span>
+                  <strong>{{ activeHypothesisCount }}</strong>
                 </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-600">Notes</span>
-                  <span class="font-bold">{{ noteCount }}</span>
+                <div style="display: flex; justify-content: space-between;">
+                  <span>📝 Notes</span>
+                  <strong>{{ noteCount }}</strong>
                 </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-600">Days Open</span>
-                  <span class="font-bold">{{ daysOpen }}</span>
+                <div style="display: flex; justify-content: space-between;">
+                  <span>🧭 Paths</span>
+                  <strong>{{ pathsCount }}</strong>
                 </div>
               </div>
-            </cb-glass-card>
-            
-            <!-- Permissions -->
-            <cb-glass-card additionalClasses="p-5">
-              <h3 class="font-semibold mb-4">🔐 Your Permissions</h3>
-              <div class="flex flex-wrap gap-2">
-                <span *ngIf="canAddEvidence" class="text-xs px-2 py-1 bg-green-100 text-green-700 rounded">Add Evidence</span>
-                <span *ngIf="canCreateConnections" class="text-xs px-2 py-1 bg-indigo-100 text-indigo-700 rounded">Create Connections</span>
-                <span *ngIf="canCreateHypotheses" class="text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded">Create Hypotheses</span>
-                <span *ngIf="canCloseCase" class="text-xs px-2 py-1 bg-red-100 text-red-700 rounded">Close Case</span>
+
+              <hr style="border: 1px solid black; margin: 15px 0;">
+
+              <!-- Permissions -->
+              <label>Your Permissions</label>
+              <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px;">
+                <span *ngIf="canAddEvidence" class="badge" style="background: white; font-size: 0.65rem;">Add Evidence</span>
+                <span *ngIf="canCreateConnections" class="badge" style="background: white; font-size: 0.65rem;">Connect</span>
+                <span *ngIf="canCreateHypotheses" class="badge" style="background: white; font-size: 0.65rem;">Hypothesize</span>
+                <span *ngIf="canCloseCase" class="badge" style="background: white; font-size: 0.65rem;">Close Case</span>
               </div>
-            </cb-glass-card>
-          </div>
+            </div>
+          </aside>
+
+          <!-- Timeline -->
+          <main class="active-work-area">
+            <div class="timeline-header">
+              <h2>📅 Timeline View</h2>
+            </div>
+
+            <div class="timeline">
+              <div class="timeline-item" *ngFor="let entry of timeline()">
+                <div class="timeline-icon">
+                  {{ getEventIcon(entry.type) }}
+                </div>
+                <div class="brutal-card" style="margin-bottom: 0;"
+                     [style.background]="getEventCardColor(entry.type)">
+                  <!-- Chain of Custody Sticker -->
+                  <span class="sticker" *ngIf="entry.actorId">
+                    {{ entry.actorId | uppercase | slice:0:3 }} &bull; {{ formatTimestamp(entry.occurredAt) }}
+                  </span>
+
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span class="badge" style="background: white; color: black;">{{ entry.type }}</span>
+                    <span class="mono" style="font-size: 0.7rem;">{{ entry.occurredAt }}</span>
+                  </div>
+                  <h4 [style.color]="entry.type === 'NOTE_ADDED' ? 'white' : 'black'">
+                    {{ entry.title || entry.type }}
+                  </h4>
+                  <p *ngIf="entry.description"
+                     [style.color]="entry.type === 'NOTE_ADDED' ? 'rgba(255,255,255,0.9)' : 'black'">
+                    {{ entry.description }}
+                  </p>
+                  <div style="margin-top: 10px; font-size: 0.8rem; font-weight: bold;"
+                       *ngIf="entry.actorId">
+                    👤 {{ entry.actorId }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div *ngIf="timeline().length === 0" class="brutal-card" style="text-align: center; padding: 30px;">
+              <p>No timeline events yet.</p>
+            </div>
+          </main>
         </div>
-        
-        <!-- Investigation Board View -->
+
+        <!-- ==================== BOARD VIEW ==================== -->
         <div *ngIf="viewMode() === 'board'" class="board-view-container">
-          <!-- Board Header with Instructions Button -->
-          <div class="board-header">
-            <div class="flex items-center gap-4">
-              <h2 class="text-lg font-semibold">🧠 Mind Palace - Investigation Board</h2>
-              <cb-brutal-button 
-                variant="ghost" 
-                size="sm" 
-                icon="❓" 
-                (clicked)="showBoardInstructions()"
-              >
-                Help
-              </cb-brutal-button>
+          <div class="board-header-bar">
+            <div style="display: flex; align-items: center; gap: 15px;">
+              <h2>🧠 Investigation Board</h2>
+              <button class="brutal-btn" style="padding: 6px 12px; font-size: 0.75rem;" (click)="showBoardInstructions()">❓ Help</button>
             </div>
-            
-            <div class="flex items-center gap-3">
-              <div class="board-stats">
-                <span>{{ nodesCount() }} nodes</span>
-                <span class="text-gray-400">|</span>
-                <span>{{ connectionsCount() }} connections</span>
-                <span class="text-gray-400">|</span>
-                <span>{{ boardMode() | titlecase }} mode</span>
-              </div>
+            <div class="board-stats">
+              <span>{{ nodesCount() }} nodes</span>
+              <span style="color: #999;">|</span>
+              <span>{{ connectionsCount() }} connections</span>
+              <span style="color: #999;">|</span>
+              <span>{{ boardMode() | titlecase }} mode</span>
             </div>
           </div>
-          
-          <!-- Board Layout -->
+
           <div class="board-layout">
-            <!-- Toolbar (Left Sidebar) -->
-            <cb-glass-card additionalClasses="toolbar-sidebar">
+            <div class="toolbar-sidebar brutal-card">
               <cb-board-toolbar></cb-board-toolbar>
-            </cb-glass-card>
-            
-            <!-- Canvas Container -->
+            </div>
             <div class="canvas-container">
               <cb-investigation-board></cb-investigation-board>
             </div>
           </div>
-          
-          <!-- Status Bar -->
+
           <div class="board-status-bar">
-            <div class="flex items-center gap-4 text-sm text-gray-600">
+            <div style="display: flex; align-items: center; gap: 12px; font-size: 0.85rem;">
               <span>Grid: {{ isGridVisible() ? 'On' : 'Off' }}</span>
-              <span class="text-gray-400">|</span>
+              <span style="color: #999;">|</span>
               <span>Zoom: {{ boardZoom() }}%</span>
-              <span class="text-gray-400">|</span>
+              <span style="color: #999;">|</span>
               <span>Grid Size: {{ gridSize() }}px</span>
             </div>
-            <div class="text-sm text-gray-500">
-              Press <kbd class="kbd">Space</kbd> for pan mode, 
-              <kbd class="kbd">Esc</kbd> to deselect
+            <div style="font-size: 0.8rem;">
+              <kbd class="kbd">Space</kbd> pan &bull;
+              <kbd class="kbd">Esc</kbd> deselect
             </div>
           </div>
-          
+
           <!-- Instructions Overlay -->
           <div *ngIf="showInstructions()" class="instructions-overlay" (click)="dismissBoardInstructions()">
-            <cb-glass-card additionalClasses="instructions-card" (click)="$event.stopPropagation()">
-              <h3 class="text-xl font-bold mb-4">🧠 Investigation Board - Quick Guide</h3>
+            <div class="brutal-card instructions-card" (click)="$event.stopPropagation()">
+              <h3 style="margin-bottom: 15px;">🧠 Board — Quick Guide</h3>
               <div class="instructions-content">
                 <div class="instruction-item">
                   <span class="instruction-icon">🖱️</span>
-                  <div>
-                    <strong>Select Mode</strong>
-                    <p>Click to select nodes, drag to move them</p>
-                  </div>
+                  <div><strong>Select</strong><p>Click to select, drag to move</p></div>
                 </div>
                 <div class="instruction-item">
                   <span class="instruction-icon">🔗</span>
-                  <div>
-                    <strong>Connect Mode</strong>
-                    <p>Click a source node, then click a target to connect</p>
-                  </div>
+                  <div><strong>Connect</strong><p>Click source → click target</p></div>
                 </div>
                 <div class="instruction-item">
                   <span class="instruction-icon">👆</span>
-                  <div>
-                    <strong>Pan Mode</strong>
-                    <p>Drag to pan the canvas. Or hold Space in select mode</p>
-                  </div>
+                  <div><strong>Pan</strong><p>Drag to pan, or hold Space</p></div>
                 </div>
                 <div class="instruction-item">
-                  <span class="instruction-icon">🖱️</span>
-                  <div>
-                    <strong>Zoom</strong>
-                    <p>Use mouse wheel to zoom in/out</p>
-                  </div>
+                  <span class="instruction-icon">🔍</span>
+                  <div><strong>Zoom</strong><p>Mouse wheel</p></div>
                 </div>
                 <div class="instruction-item">
                   <span class="instruction-icon">⌨️</span>
-                  <div>
-                    <strong>Keyboard Shortcuts</strong>
-                    <p>Ctrl+Z: Undo | Ctrl+Y: Redo | Esc: Deselect</p>
-                  </div>
+                  <div><strong>Shortcuts</strong><p>Ctrl+Z Undo | Ctrl+Y Redo | Esc Deselect</p></div>
                 </div>
               </div>
-              <cb-brutal-button variant="primary" (clicked)="dismissBoardInstructions()">
-                Got it!
-              </cb-brutal-button>
-            </cb-glass-card>
+              <button class="brutal-btn" style="width: 100%; background: var(--lime);" (click)="dismissBoardInstructions()">Got it! 💪</button>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- Evidence Upload Overlay -->
-      <cb-evidence-upload 
-        *ngIf="showUpload()" 
+      <cb-evidence-upload
+        *ngIf="showUpload()"
         [caseId]="currentCase()?.id || ''"
         (completed)="showUpload.set(false)"
         (cancelled)="showUpload.set(false)"
@@ -342,104 +270,116 @@ import { PdfExportService } from '@casbook/shared-utils';
       height: calc(100vh - 180px);
       min-height: 600px;
     }
-    
-    .board-header {
+
+    .board-header-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 16px;
       padding: 12px 16px;
-      background: rgba(255, 255, 255, 0.8);
-      border-radius: 12px;
-      border: 2px solid #1f2937;
+      background: white;
+      border: var(--border-width) solid var(--border);
+      box-shadow: var(--shadow);
+      flex-wrap: wrap;
+      gap: 10px;
     }
-    
+
     .board-stats {
       display: flex;
       align-items: center;
       gap: 12px;
-      font-size: 14px;
+      font-size: 0.85rem;
+      font-weight: bold;
     }
-    
+
     .board-layout {
       display: flex;
       flex: 1;
       gap: 16px;
       min-height: 0;
     }
-    
+
     .toolbar-sidebar {
       width: 280px;
       flex-shrink: 0;
       overflow-y: auto;
     }
-    
+
     .canvas-container {
       flex: 1;
-      border: 2px solid #1f2937;
-      border-radius: 12px;
+      border: var(--border-width) solid var(--border);
       overflow: hidden;
-      background: white;
+      background: var(--dark-bg);
     }
-    
+
     .board-status-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px 16px;
+      padding: 10px 16px;
       margin-top: 16px;
-      background: rgba(255, 255, 255, 0.8);
-      border-radius: 12px;
-      border: 2px solid #1f2937;
+      background: white;
+      border: var(--border-width) solid var(--border);
+      box-shadow: var(--shadow);
+      flex-wrap: wrap;
+      gap: 10px;
     }
-    
+
     .kbd {
       display: inline-block;
       padding: 2px 6px;
-      background: #f3f4f6;
-      border: 1px solid #d1d5db;
-      border-radius: 4px;
-      font-family: monospace;
-      font-size: 12px;
+      background: #eee;
+      border: 2px solid black;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
     }
-    
+
     .instructions-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.5);
+      background: rgba(0, 0, 0, 0.7);
       display: flex;
       align-items: center;
       justify-content: center;
       z-index: 1000;
     }
-    
+
     .instructions-card {
       max-width: 500px;
       padding: 24px;
     }
-    
+
     .instructions-content {
       display: flex;
       flex-direction: column;
       gap: 16px;
       margin-bottom: 24px;
     }
-    
+
     .instruction-item {
       display: flex;
       gap: 12px;
       align-items: flex-start;
     }
-    
+
     .instruction-icon {
       font-size: 24px;
       flex-shrink: 0;
     }
-    
+
     .instruction-item p {
       margin: 0;
-      color: #6b7280;
-      font-size: 14px;
+      color: #666;
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 900px) {
+      .board-layout {
+        flex-direction: column;
+      }
+      .toolbar-sidebar {
+        width: 100%;
+      }
     }
   `]
 })
@@ -469,7 +409,9 @@ export class CaseDetailContainerComponent {
 
   effectiveRole = () => this.store.uiState().roleOverride || this.store.currentUser().role;
 
-  // Helper getters to avoid strict null check issues in template
+  getSeverityColor = getSeverityColor;
+
+  // Helper getters
   get caseTitle(): string { return this.currentCase()?.title || ''; }
   get caseDescription(): string { return this.currentCase()?.description || ''; }
   get evidenceCount(): number { return this.currentCase()?.evidenceCount || 0; }
@@ -486,6 +428,29 @@ export class CaseDetailContainerComponent {
   get canCloseCase(): boolean { return this.currentCase()?.permissions?.canCloseCase || false; }
   get canUpdateLayout(): boolean { return this.currentCase()?.permissions?.canUpdateLayout || false; }
   get canTimeTravel(): boolean { return this.currentCase()?.permissions?.canTimeTravel || false; }
+
+  getEventIcon(type: string): string {
+    if (type.includes('EVIDENCE')) return '💾';
+    if (type.includes('HYPOTHESIS')) return '🧠';
+    if (type.includes('NOTE')) return '📝';
+    if (type.includes('CONNECTION')) return '🔗';
+    if (type.includes('CASE')) return '📁';
+    return '📌';
+  }
+
+  getEventCardColor(type: string): string {
+    if (type.includes('HYPOTHESIS')) return 'var(--yellow)';
+    if (type.includes('NOTE')) return 'var(--blue)';
+    if (type.includes('EVIDENCE')) return 'white';
+    if (type.includes('CONNECTION')) return 'var(--lavender)';
+    return 'white';
+  }
+
+  formatTimestamp(iso: string): string {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  }
 
   setViewMode(mode: 'timeline' | 'board'): void {
     if (mode === 'board' && !this.canViewBoard) {

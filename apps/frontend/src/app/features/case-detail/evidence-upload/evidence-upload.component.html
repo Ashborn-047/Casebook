@@ -1,9 +1,9 @@
-<div class="modal-overlay active" (click)="cancel()">
-    <div class="brutal-card modal-content" (click)="$event.stopPropagation()">
+<div class="modal-overlay active" (click)="cancel()" (keydown.escape)="cancel()" tabindex="-1" role="presentation">
+    <div class="brutal-card modal-content" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2 style="margin: 0;">📎 Upload Evidence</h2>
-            <button (click)="cancel()"
-                style="border:none; background:none; cursor:pointer; font-size: 1.5rem;">✕</button>
+            <button (click)="cancel()" style="border:none; background:none; cursor:pointer; font-size: 1.5rem;"
+                aria-label="Close">✕</button>
         </div>
 
         <!-- Type Selector -->
@@ -23,30 +23,34 @@
         </div>
 
         <!-- Content Input -->
-        <div [ngSwitch]="type()">
-            <div *ngSwitchCase="'text'" class="form-group">
-                <label>Content</label>
-                <textarea rows="4" [ngModel]="content()" (ngModelChange)="content.set($event)"
-                    placeholder="Enter evidence textual content..."></textarea>
-            </div>
-
-            <div *ngSwitchCase="'file'">
-                <div class="drop-zone">
-                    <input type="file" (change)="onFileSelected($event)" id="fileInput" style="display: none;">
-                    <label for="fileInput" style="cursor: pointer; display: block;">
-                        <p style="font-weight: 900;">
-                            {{ selectedFile() ? selectedFile()?.name : 'DRAG & DROP FILES HERE' }}
-                        </p>
-                        <p style="font-size: 0.8rem; margin-top: 10px;">or click to browse</p>
-                    </label>
-                </div>
-            </div>
-
-            <div *ngSwitchCase="'url'" class="form-group">
-                <label>Source URL</label>
-                <input type="url" [ngModel]="content()" (ngModelChange)="content.set($event)" placeholder="https://...">
+        @switch (type()) {
+        @case ('text') {
+        <div class="form-group">
+            <label>Content</label>
+            <textarea rows="4" [ngModel]="content()" (ngModelChange)="content.set($event)"
+                placeholder="Enter evidence textual content..."></textarea>
+        </div>
+        }
+        @case ('file') {
+        <div>
+            <div class="drop-zone">
+                <input type="file" (change)="onFileSelected($event)" id="fileInput" style="display: none;">
+                <label for="fileInput" style="cursor: pointer; display: block;">
+                    <p style="font-weight: 900;">
+                        {{ selectedFile() ? selectedFile()?.name : 'DRAG & DROP FILES HERE' }}
+                    </p>
+                    <p style="font-size: 0.8rem; margin-top: 10px;">or click to browse</p>
+                </label>
             </div>
         </div>
+        }
+        @case ('url') {
+        <div class="form-group">
+            <label>Source URL</label>
+            <input type="url" [ngModel]="content()" (ngModelChange)="content.set($event)" placeholder="https://...">
+        </div>
+        }
+        }
 
         <!-- Description -->
         <div class="form-group">
@@ -70,12 +74,14 @@
         </div>
 
         <!-- Hash Display -->
-        <div *ngIf="computedHash() || isHashing()" class="form-group">
+        @if (computedHash() || isHashing()) {
+        <div class="form-group">
             <label>Integrity Hash</label>
             <div class="hash-box mono">
                 {{ isHashing() ? '⏳ Calculating SHA-256...' : ('SHA256: ' + computedHash()) }}
             </div>
         </div>
+        }
 
         <!-- Actions -->
         <div style="display: flex; gap: 10px; margin-top: 15px;">

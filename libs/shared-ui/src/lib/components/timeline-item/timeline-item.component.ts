@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TimelineEntry, UserRole } from '@casbook/shared-models';
+import { TimelineEntry } from '@casbook/shared-models';
 import { RoleBadgeComponent } from '../role-badge';
 import { GlassCardComponent } from '../glass-card';
 
@@ -18,7 +18,9 @@ import { GlassCardComponent } from '../glass-card';
         >
           {{ getIcon() }}
         </div>
-        <div *ngIf="!isLast" class="w-0.5 flex-1 bg-gray-200 my-2"></div>
+        @if (!isLast) {
+          <div class="w-0.5 flex-1 bg-gray-200 my-2"></div>
+        }
       </div>
       
       <!-- Content -->
@@ -28,10 +30,12 @@ import { GlassCardComponent } from '../glass-card';
             <div class="flex-1">
               <div class="flex items-center gap-2 flex-wrap">
                 <h4 class="font-semibold text-brutal-dark">{{ entry.title }}</h4>
-                <cb-role-badge [role]="entry.actorRole" [showLabel]="false"></cb-role-badge>
-                <span *ngIf="entry.metadata?.isMindPalace" class="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full">
-                  🧠 Mind Palace
-                </span>
+                <cb-role-badge [role]="entry.actorRole" [showLabel]="false" />
+                @if (entry.metadata?.isMindPalace) {
+                  <span class="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full">
+                    🧠 Mind Palace
+                  </span>
+                }
               </div>
               <p class="text-sm text-gray-600 mt-1">{{ entry.description }}</p>
             </div>

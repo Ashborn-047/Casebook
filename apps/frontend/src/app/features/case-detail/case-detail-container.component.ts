@@ -207,74 +207,74 @@ import { getSeverityColor } from '../../shared/utils/contrast.util';
           <!-- ==================== BOARD VIEW ==================== -->
           @if (viewMode() === 'board') {
             <div class="board-view-container">
-            <div class="board-layout">
-              <div class="canvas-container">
-                <!-- Floating Toolbar -->
-                <div class="floating-toolbar">
-                  <cb-board-toolbar></cb-board-toolbar>
-                </div>
-
-                <cb-investigation-board></cb-investigation-board>
-              </div>
-            </div>
-
-            <div class="board-status-bar">
-              <div class="status-group">
-                <span class="stat-tag">NODES: {{ nodesCount() }}</span>
-                <span class="stat-tag">LINKS: {{ connectionsCount() }}</span>
-                <span class="stat-tag mode-tag">{{ boardMode() | uppercase }} MODE</span>
-              </div>
-
-              <div class="status-group central-group">
-                <span>Grid: {{ isGridVisible() ? 'On' : 'Off' }}</span>
-                <span class="divider">|</span>
-                <span>Zoom: {{ boardZoom() }}%</span>
-                <span class="divider">|</span>
-                <span>Size: {{ gridSize() }}px</span>
-                <button class="mini-help-btn" (click)="showBoardInstructions()" aria-label="Show Board Instructions">?</button>
-              </div>
-
-              <div class="status-group hotkeys">
-                <kbd class="kbd">Space</kbd> pan &bull;
-                <kbd class="kbd">Esc</kbd> deselect
-              </div>
-            </div>
-
-            <!-- Instructions Overlay -->
-            @if (showInstructions()) {
-              <div class="instructions-overlay" (click)="dismissBoardInstructions()" (keydown.escape)="dismissBoardInstructions()" (keydown.enter)="dismissBoardInstructions()" tabindex="0" role="button" aria-label="Close instructions">
-                <div class="brutal-card instructions-card" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Board Instructions" tabindex="-1">
-                  <h3 style="margin-bottom: 15px;">🧠 Board — Quick Guide</h3>
-                  <div class="instructions-content">
-                    <div class="instruction-item">
-                      <span class="instruction-icon">🖱️</span>
-                      <div><strong>Select</strong><p>Click to select, drag to move</p></div>
-                    </div>
-                    <div class="instruction-item">
-                      <span class="instruction-icon">🔗</span>
-                      <div><strong>Connect</strong><p>Click source → click target</p></div>
-                    </div>
-                    <div class="instruction-item">
-                      <span class="instruction-icon">👆</span>
-                      <div><strong>Pan</strong><p>Drag to pan, or hold Space</p></div>
-                    </div>
-                    <div class="instruction-item">
-                      <span class="instruction-icon">🔍</span>
-                      <div><strong>Zoom</strong><p>Mouse wheel</p></div>
-                    </div>
-                    <div class="instruction-item">
-                      <span class="instruction-icon">⌨️</span>
-                      <div><strong>Shortcuts</strong><p>Ctrl+Z Undo | Ctrl+Y Redo | Esc Deselect</p></div>
-                    </div>
+              <div class="board-layout">
+                <div class="canvas-container">
+                  <!-- Floating Toolbar -->
+                  <div class="floating-toolbar">
+                    <cb-board-toolbar></cb-board-toolbar>
                   </div>
-                  <button class="brutal-btn" style="width: 100%; background: var(--lime);" (click)="dismissBoardInstructions()">Got it! 💪</button>
+
+                  <cb-investigation-board></cb-investigation-board>
                 </div>
               </div>
-            }
-          </div>
-        }
-      </div>
-    }
+
+              <div class="board-status-bar">
+                <div class="status-group">
+                  <span class="stat-tag">NODES: {{ nodesCount() }}</span>
+                  <span class="stat-tag">LINKS: {{ connectionsCount() }}</span>
+                  <span class="stat-tag mode-tag">{{ boardMode() | uppercase }} MODE</span>
+                </div>
+
+                <div class="status-group central-group">
+                  <span>Grid: {{ isGridVisible() ? 'On' : 'Off' }}</span>
+                  <span class="divider">|</span>
+                  <span>Zoom: {{ boardZoom() }}%</span>
+                  <span class="divider">|</span>
+                  <span>Size: {{ gridSize() }}px</span>
+                  <button class="mini-help-btn" (click)="showBoardInstructions()" aria-label="Show Board Instructions">?</button>
+                </div>
+
+                <div class="status-group hotkeys">
+                  <kbd class="kbd">Space</kbd> pan &bull;
+                  <kbd class="kbd">Esc</kbd> deselect
+                </div>
+              </div>
+
+              <!-- Instructions Overlay -->
+              @if (showInstructions()) {
+                <div class="instructions-overlay" (click)="dismissBoardInstructions()" (keydown.escape)="dismissBoardInstructions()" (keydown.enter)="dismissBoardInstructions()" tabindex="0" role="button" aria-label="Close instructions">
+                  <div class="brutal-card instructions-card" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Board Instructions" tabindex="-1">
+                    <h3 style="margin-bottom: 15px;">🧠 Board — Quick Guide</h3>
+                    <div class="instructions-content">
+                      <div class="instruction-item">
+                        <span class="instruction-icon">🖱️</span>
+                        <div><strong>Select</strong><p>Click to select, drag to move</p></div>
+                      </div>
+                      <div class="instruction-item">
+                        <span class="instruction-icon">🔗</span>
+                        <div><strong>Connect</strong><p>Click source → click target</p></div>
+                      </div>
+                      <div class="instruction-item">
+                        <span class="instruction-icon">👆</span>
+                        <div><strong>Pan</strong><p>Drag to pan, or hold Space</p></div>
+                      </div>
+                      <div class="instruction-item">
+                        <span class="instruction-icon">🔍</span>
+                        <div><strong>Zoom</strong><p>Mouse wheel</p></div>
+                      </div>
+                      <div class="instruction-item">
+                        <span class="instruction-icon">⌨️</span>
+                        <div><strong>Shortcuts</strong><p>Ctrl+Z Undo | Ctrl+Y Redo | Esc Deselect</p></div>
+                      </div>
+                    </div>
+                    <button class="brutal-btn" style="width: 100%; background: var(--lime);" (click)="dismissBoardInstructions()">Got it! 💪</button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
 
       <!-- Evidence Upload Overlay -->
       @if (showUpload()) {

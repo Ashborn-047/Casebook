@@ -12,8 +12,10 @@ import { CommonModule } from '@angular/common';
       [disabled]="disabled"
       (click)="handleClick($event)"
     >
-      <span *ngIf="icon" class="text-lg">{{ icon }}</span>
-      <ng-content></ng-content>
+      @if (icon) {
+        <span class="text-lg">{{ icon }}</span>
+      }
+      <ng-content />
     </button>
   `,
     styles: [`

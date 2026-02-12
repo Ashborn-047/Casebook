@@ -13,7 +13,7 @@ import { CaseStore } from '../../core/state/case-store.service';
  * the sequence of immutable events up to the selected point.
  */
 @Component({
-    selector: 'app-time-travel-debugger',
+    selector: 'cb-time-travel-debugger',
     standalone: true,
     imports: [CommonModule],
     templateUrl: './time-travel-debugger.component.html',

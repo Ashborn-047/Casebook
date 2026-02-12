@@ -12,7 +12,7 @@ import { HashService } from '@casbook/shared-utils';
  * This ensures the SHA-256 fingerprint is part of the immutable event payload.
  */
 @Component({
-    selector: 'app-evidence-upload',
+    selector: 'cb-evidence-upload',
     standalone: true,
     imports: [FormsModule],
     templateUrl: './evidence-upload.component.html',

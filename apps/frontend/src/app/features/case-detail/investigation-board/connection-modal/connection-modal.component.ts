@@ -10,7 +10,7 @@ export interface ConnectionFormData {
 }
 
 @Component({
-    selector: 'app-connection-modal',
+    selector: 'cb-connection-modal',
     standalone: true,
     imports: [FormsModule],
     templateUrl: './connection-modal.component.html',

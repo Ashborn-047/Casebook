@@ -3,10 +3,10 @@ import { Component, EventEmitter, Output, Input } from '@angular/core';
 import { BoardConnection } from '@casbook/shared-models';
 
 @Component({
-    selector: 'app-yarn-inspector',
-    standalone: true,
-    imports: [],
-    template: `
+  selector: 'cb-yarn-inspector',
+  standalone: true,
+  imports: [],
+  template: `
         <div class="inspector-popover" [style.left.px]="posX" [style.top.px]="posY">
           <div class="inspector-header">
             <span class="type-badge">{{ getTypeIcon() }} {{ connection?.type }}</span>
@@ -58,38 +58,38 @@ import { BoardConnection } from '@casbook/shared-models';
           </div>
         </div>
         `,
-    styleUrls: ['./yarn-inspector.component.scss'],
+  styleUrls: ['./yarn-inspector.component.scss'],
 })
 export class YarnInspectorComponent {
-    @Input() connection: BoardConnection | null = null;
-    @Input() posX = 0;
-    @Input() posY = 0;
-    @Input() sharedTokens: string[] = [];
+  @Input() connection: BoardConnection | null = null;
+  @Input() posX = 0;
+  @Input() posY = 0;
+  @Input() sharedTokens: string[] = [];
 
-    @Output() closed = new EventEmitter<void>();
-    @Output() disputed = new EventEmitter<void>();
-    @Output() deleted = new EventEmitter<void>();
+  @Output() closed = new EventEmitter<void>();
+  @Output() disputed = new EventEmitter<void>();
+  @Output() deleted = new EventEmitter<void>();
 
-    readonly strengthDots = [0, 1, 2];
+  readonly strengthDots = [0, 1, 2];
 
-    getTypeIcon(): string {
-        const icons: Record<string, string> = {
-            supports: '✅',
-            contradicts: '❌',
-            related_to: '🔗',
-            timeline: '🕐',
-            causality: '⚡',
-            metadata: '📋',
-        };
-        return icons[this.connection?.type || ''] || '🔗';
+  getTypeIcon(): string {
+    const icons: Record<string, string> = {
+      supports: '✅',
+      contradicts: '❌',
+      related_to: '🔗',
+      timeline: '🕐',
+      causality: '⚡',
+      metadata: '📋',
+    };
+    return icons[this.connection?.type || ''] || '🔗';
+  }
+
+  getStrengthLabel(): string {
+    switch (this.connection?.strength) {
+      case 1: return 'Weak';
+      case 2: return 'Medium';
+      case 3: return 'Strong';
+      default: return 'Unknown';
     }
-
-    getStrengthLabel(): string {
-        switch (this.connection?.strength) {
-            case 1: return 'Weak';
-            case 2: return 'Medium';
-            case 3: return 'Strong';
-            default: return 'Unknown';
-        }
-    }
+  }
 }

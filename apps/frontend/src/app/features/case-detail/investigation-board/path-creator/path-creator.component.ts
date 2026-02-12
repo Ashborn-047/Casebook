@@ -10,7 +10,7 @@ import { CaseStore } from '../../../../core/state/case-store.service';
 import { Evidence } from '@casbook/shared-models';
 
 @Component({
-    selector: 'app-path-creator',
+    selector: 'cb-path-creator',
     standalone: true,
     imports: [CommonModule, FormsModule],
     templateUrl: './path-creator.component.html',

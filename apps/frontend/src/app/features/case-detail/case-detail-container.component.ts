@@ -13,7 +13,7 @@ import { PdfExportService } from '@casbook/shared-utils';
 import { getSeverityColor } from '../../shared/utils/contrast.util';
 
 @Component({
-  selector: 'app-case-detail-container',
+  selector: 'cb-case-detail-container',
   standalone: true,
   imports: [
     CommonModule,
@@ -70,7 +70,7 @@ import { getSeverityColor } from '../../shared/utils/contrast.util';
       <!-- Time Travel Debugger -->
       @if (showTimeTravel()) {
         <div style="margin-bottom: 20px; flex-shrink: 0;">
-          <app-time-travel-debugger></app-time-travel-debugger>
+          <cb-time-travel-debugger></cb-time-travel-debugger>
         </div>
       }
 
@@ -200,9 +200,9 @@ import { getSeverityColor } from '../../shared/utils/contrast.util';
                 <div class="canvas-container">
                   <!-- Floating Toolbar -->
                   <div class="floating-toolbar">
-                    <app-board-toolbar></app-board-toolbar>
+                    <cb-board-toolbar></cb-board-toolbar>
                   </div>
-                  <app-investigation-board></app-investigation-board>
+                  <cb-investigation-board></cb-investigation-board>
                 </div>
               </div>
               <div class="board-status-bar">
@@ -262,11 +262,11 @@ import { getSeverityColor } from '../../shared/utils/contrast.util';
 
       <!-- Evidence Upload Overlay -->
       @if (showUpload()) {
-        <app-evidence-upload
+        <cb-evidence-upload
           [caseId]="currentCase()?.id || ''"
           (completed)="showUpload.set(false)"
           (cancelled)="showUpload.set(false)"
-        ></app-evidence-upload>
+        ></cb-evidence-upload>
       }
     </div>
     `,

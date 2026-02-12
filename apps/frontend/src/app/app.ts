@@ -7,7 +7,7 @@ import { CommandPaletteComponent } from './shared/command-palette/command-palett
 
 @Component({
   imports: [RouterModule, CommandPaletteComponent],
-  selector: 'app-root',
+  selector: 'cb-root',
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })

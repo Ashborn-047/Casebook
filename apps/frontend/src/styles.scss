@@ -57,7 +57,7 @@ body {
   color: var(--text);
 }
 
-app-root {
+cb-root {
   display: flex !important;
   flex-direction: column !important;
   height: 100vh !important;
@@ -67,7 +67,7 @@ app-root {
 }
 
 /* The active component rendered after router-outlet should fill the space */
-app-root>*:not(header):not(cb-command-palette):not(router-outlet) {
+cb-root>*:not(header):not(cb-command-palette):not(router-outlet) {
   flex: 1;
   display: flex !important;
   flex-direction: column !important;

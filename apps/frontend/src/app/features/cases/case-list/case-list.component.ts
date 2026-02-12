@@ -7,7 +7,7 @@ import { UserRole } from '@casbook/shared-models';
 import { getSeverityColor } from '../../../shared/utils/contrast.util';
 
 @Component({
-  selector: 'app-case-list',
+  selector: 'cb-case-list',
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule],
   template: `

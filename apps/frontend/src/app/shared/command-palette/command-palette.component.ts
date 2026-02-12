@@ -22,7 +22,7 @@ interface CommandItem {
 }
 
 @Component({
-    selector: 'app-command-palette',
+    selector: 'cb-command-palette',
     standalone: true,
     imports: [],
     template: `

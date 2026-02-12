@@ -112,7 +112,7 @@ import { getSeverityColor } from '../../../shared/utils/contrast.util';
 
     <!-- Create Case Modal -->
     @if (showCreateModal()) {
-      <div class="modal-overlay" (click)="closeModal($event)" (keydown.escape)="showCreateModal.set(false)" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-overlay" (click)="closeModal($event)" (keydown.escape)="showCreateModal.set(false)" (keydown.enter)="closeModal($event)" tabindex="0" role="button" aria-label="Close modal" aria-modal="true" aria-labelledby="modalTitle">
         <div class="brutal-card" style="width: 500px; max-width: 90vw; padding: 30px;" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" role="document" tabindex="-1">
           <h2 id="modalTitle" style="margin: 0 0 20px 0; border-bottom: 3px solid black; padding-bottom: 10px;">🆕 New Case</h2>
 

@@ -242,8 +242,8 @@ import { getSeverityColor } from '../../shared/utils/contrast.util';
 
             <!-- Instructions Overlay -->
             @if (showInstructions()) {
-              <div class="instructions-overlay" (click)="dismissBoardInstructions()" (keydown.escape)="dismissBoardInstructions()" tabindex="0" role="button" aria-label="Close instructions">
-                <div class="brutal-card instructions-card" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Board Instructions">
+              <div class="instructions-overlay" (click)="dismissBoardInstructions()" (keydown.escape)="dismissBoardInstructions()" (keydown.enter)="dismissBoardInstructions()" tabindex="0" role="button" aria-label="Close instructions">
+                <div class="brutal-card instructions-card" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Board Instructions" tabindex="-1">
                   <h3 style="margin-bottom: 15px;">🧠 Board — Quick Guide</h3>
                   <div class="instructions-content">
                     <div class="instruction-item">
@@ -271,9 +271,10 @@ import { getSeverityColor } from '../../shared/utils/contrast.util';
                 </div>
               </div>
             }
-          }
-        </div>
-      }
+          </div>
+        }
+      </div>
+    }
 
       <!-- Evidence Upload Overlay -->
       @if (showUpload()) {

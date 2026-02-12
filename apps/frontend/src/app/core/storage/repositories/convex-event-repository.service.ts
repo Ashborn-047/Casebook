@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
-import { Observable, from, of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { ConvexHttpClient } from 'convex/browser';
 import { IEventRepository } from './event-repository.interface';
 import { AppEvent, CaseState } from '@casbook/shared-models';
 import { environment } from '../../../../environments/environment';
-import { anyApi } from 'convex/server';
 
 /**
  * ConvexEventRepositoryAdapter
@@ -36,9 +35,11 @@ export class ConvexEventRepository implements IEventRepository {
 
         try {
             // Using string-based API to avoid dependency on generated local files in this environment
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await this.client.mutation('events:appendEvent' as any, {
                 localId: event.id,
                 type: event.type,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 caseId: (event.payload as any).caseId || 'global',
                 occurredAt: event.occurredAt,
                 payload: event.payload
@@ -59,7 +60,9 @@ export class ConvexEventRepository implements IEventRepository {
         if (!caseId) return [];
 
         try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const results = await this.client.query('events:getEventsByCase' as any, { caseId });
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return (results as any[]).map(r => ({
                 id: r.localId,
                 type: r.type,
@@ -129,6 +132,8 @@ export class ConvexEventRepository implements IEventRepository {
         return "";
     }
 
-    async restoreBackup(backup: string): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async restoreBackup(_backup: string): Promise<void> {
+        // No-op for mirror
     }
 }

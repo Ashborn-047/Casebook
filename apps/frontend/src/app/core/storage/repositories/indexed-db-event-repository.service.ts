@@ -76,7 +76,8 @@ export class IndexedDBEventRepository implements IEventRepository {
         return new Promise((resolve, reject) => {
             const transaction = this.db!.transaction(['events'], 'readonly');
             const store = transaction.objectStore('events');
-            const request = store.getAll();
+            const index = store.index('occurredAt');
+            const request = index.getAll();
 
             request.onsuccess = () => {
                 let events: AppEvent[] = request.result;
@@ -85,9 +86,8 @@ export class IndexedDBEventRepository implements IEventRepository {
                         'caseId' in event.payload && (event.payload as { caseId: string }).caseId === caseId
                     );
                 }
-                events.sort((a, b) =>
-                    new Date(a.occurredAt).getTime() - new Date(b.occurredAt).getTime()
-                );
+                // Using 'occurredAt' index ensures events are already sorted chronologically
+                // removing the need for an O(N log N) manual sort in JavaScript.
                 resolve(events);
             };
             request.onerror = () => reject(new Error(`Failed to get events: ${request.error}`));

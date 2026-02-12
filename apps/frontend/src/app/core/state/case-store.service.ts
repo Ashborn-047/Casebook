@@ -2,18 +2,15 @@ import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { Router } from '@angular/router';
 import {
     AppEvent,
-    UserRole,
-    createEvent,
-    EventType
+    UserRole
 } from '@casbook/shared-models';
 import {
     User,
     CaseState,
-    TimelineEntry,
-    INITIAL_CASE_STATE
+    TimelineEntry
 } from '@casbook/shared-models';
 import { reduceEvents, getStateAtTime } from '@casbook/shared-logic';
-import { can, eventTypeToAction, BUSINESS_RULES } from '@casbook/shared-models';
+import { can } from '@casbook/shared-models';
 import { IEventRepository } from '../storage/repositories/event-repository.interface';
 import { IndexedDBEventRepository } from '../storage/repositories/indexed-db-event-repository.service';
 import { EventSyncService } from '../sync/event-sync.service';
@@ -114,7 +111,7 @@ export class CaseStore {
         const effectiveRole = this.uiState().roleOverride || this.currentUser().role;
 
         return caseEvents
-            .map(event => this.eventToTimelineEntry(event, effectiveRole))
+            .map(event => this.eventToTimelineEntry(event))
             .filter(entry => entry.isVisibleTo.includes(effectiveRole));
     });
 
@@ -383,9 +380,9 @@ export class CaseStore {
         };
     }
 
-    private eventToTimelineEntry(event: AppEvent, currentRole: UserRole): TimelineEntry {
+    private eventToTimelineEntry(event: AppEvent): TimelineEntry {
         const baseEntry = {
-            id: crypto.randomUUID(),
+            id: event.id, // Use event.id for stable tracking in UI
             eventId: event.id,
             type: event.type,
             actorId: event.actorId,
@@ -397,9 +394,10 @@ export class CaseStore {
         switch (event.type) {
             case 'CASE_CREATED':
                 return { ...baseEntry, title: 'Case Created', description: `"${event.payload.title}"`, icon: 'add_circle', colorClass: 'text-yellow-500', isVisibleTo: ['viewer', 'investigator', 'supervisor'] as UserRole[] };
-            case 'EVIDENCE_ADDED':
+            case 'EVIDENCE_ADDED': {
                 const isRestricted = event.payload.visibility === 'restricted';
                 return { ...baseEntry, title: isRestricted ? 'Restricted Evidence Added' : 'Evidence Added', description: `${event.payload.type}: ${event.payload.description}`, icon: isRestricted ? 'lock' : 'attach_file', colorClass: isRestricted ? 'text-red-500' : 'text-purple-500', isVisibleTo: isRestricted ? ['supervisor'] as UserRole[] : ['viewer', 'investigator', 'supervisor'] as UserRole[] };
+            }
             case 'NOTE_ADDED':
                 return { ...baseEntry, title: event.payload.isInternal ? 'Internal Note Added' : 'Note Added', description: event.payload.content.substring(0, 100), icon: 'note', colorClass: 'text-blue-500', isVisibleTo: event.payload.isInternal ? ['investigator', 'supervisor'] as UserRole[] : ['viewer', 'investigator', 'supervisor'] as UserRole[] };
             case 'EVIDENCE_CONNECTED':

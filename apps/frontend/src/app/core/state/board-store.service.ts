@@ -6,7 +6,6 @@ import {
     BoardNode,
     BoardConnection,
     INITIAL_BOARD_STATE,
-    createBoardNode,
     createBoardConnection,
     calculateConnectionPath,
     CaseState,

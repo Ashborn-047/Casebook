@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { CaseStore } from '../../core/state/case-store.service';
 import { BoardStore } from '../../core/state/board-store.service';
-import { UserRole } from '@casbook/shared-models';
 import { InvestigationBoardComponent } from './investigation-board/investigation-board.component';
 import { BoardToolbarComponent } from './board-tools/board-toolbar.component';
 import { EvidenceUploadComponent } from './evidence-upload/evidence-upload.component';
@@ -30,13 +29,12 @@ import { getSeverityColor } from '../../shared/utils/contrast.util';
       @if (currentCase()) {
         <div class="case-meta-bar">
           <div class="meta-left">
-            <button class="back-btn brutal-btn" (click)='goBack()' title="Back to Cases" aria-label="Back to Cases">←</button>
+            <button class="back-btn brutal-btn" (click)="goBack()" title="Back to Cases">←</button>
             <div class="case-title-stack">
               <span class="case-id">#{{ currentCase()?.id?.slice(-6)?.toUpperCase() }}</span>
               <h1 class="case-title">{{ caseTitle }}</h1>
             </div>
           </div>
-
           <div class="meta-center">
             <div class="segmented-control">
               <button [class.active]="viewMode() === 'timeline'" (click)="setViewMode('timeline')">
@@ -47,24 +45,23 @@ import { getSeverityColor } from '../../shared/utils/contrast.util';
               </button>
             </div>
           </div>
-
           <div class="meta-right">
             <button class="brutal-btn tool-btn"
               [class.active]="showTimeTravel()"
               (click)="showTimeTravel.set(!showTimeTravel())"
-              title="Toggle Time Travel"
-              aria-label="Toggle Time Travel">
+              (keydown.enter)="showTimeTravel.set(!showTimeTravel())"
+              title="Toggle Time Travel">
               ⏳
             </button>
             <button class="brutal-btn tool-btn upload-trigger"
               (click)="showUpload.set(true)"
-              title="Upload Evidence"
-              aria-label="Upload Evidence">
+              (keydown.enter)="showUpload.set(true)"
+              title="Upload Evidence">
               📎
             </button>
             <div class="export-tray">
-              <button (click)="exportJson()">JSON</button>
-              <button (click)="exportPdf()">PDF</button>
+              <button (click)="exportJson()" (keydown.enter)="exportJson()">JSON</button>
+              <button (click)="exportPdf()" (keydown.enter)="exportPdf()">PDF</button>
             </div>
           </div>
         </div>
@@ -73,7 +70,7 @@ import { getSeverityColor } from '../../shared/utils/contrast.util';
       <!-- Time Travel Debugger -->
       @if (showTimeTravel()) {
         <div style="margin-bottom: 20px; flex-shrink: 0;">
-          <cb-time-travel-debugger></cb-time-travel-debugger>
+          <app-time-travel-debugger></app-time-travel-debugger>
         </div>
       }
 
@@ -96,7 +93,6 @@ import { getSeverityColor } from '../../shared/utils/contrast.util';
       <!-- Main Content -->
       @if (!store.uiState().isLoading && currentCase()) {
         <div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
-
           <!-- ==================== TIMELINE VIEW ==================== -->
           @if (viewMode() === 'timeline') {
             <div class="case-detail-layout">
@@ -105,25 +101,24 @@ import { getSeverityColor } from '../../shared/utils/contrast.util';
                 <div class="brutal-card" style="background: var(--lavender)">
                   <h2 style="margin-bottom: 10px;">Case Info</h2>
                   <div class="form-group">
-                    <span class="label-text">Title</span>
+                    <span class="brutal-label">Title</span>
                     <p style="font-weight: bold;">{{ caseTitle }}</p>
                   </div>
                   <div class="form-group">
-                    <span class="label-text">Severity</span>
+                    <span class="brutal-label">Severity</span>
                     <span class="badge" [style.background]="getSeverityColor(currentCase()?.severity || 'low')">
                       {{ currentCase()?.severity | uppercase }}
                     </span>
                   </div>
                   <div class="form-group">
-                    <span class="label-text">Status</span>
+                    <span class="brutal-label">Status</span>
                     <p>{{ currentCase()?.status | uppercase }} ({{ daysOpen }} Days Open)</p>
                   </div>
                   <div class="form-group">
-                    <span class="label-text">Description</span>
+                    <span class="brutal-label">Description</span>
                     <p style="font-size: 0.85rem;">{{ caseDescription }}</p>
                   </div>
                   <hr style="border: 1px solid black; margin: 15px 0;">
-
                   <!-- Case Stats -->
                   <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem;">
                     <div style="display: flex; justify-content: space-between;">
@@ -147,32 +142,28 @@ import { getSeverityColor } from '../../shared/utils/contrast.util';
                       <strong>{{ pathsCount }}</strong>
                     </div>
                   </div>
-
                   <hr style="border: 1px solid black; margin: 15px 0;">
                 </div>
               </aside>
-
               <!-- Timeline -->
               <main class="active-work-area">
                 <div class="timeline-header">
                   <h2>📅 Timeline View</h2>
                 </div>
-
                 <div class="timeline">
-                  @for (entry of timeline(); track $index) {
+                  @for (entry of timeline(); track entry.id) {
                     <div class="timeline-item">
                       <div class="timeline-icon">
                         {{ getEventIcon(entry.type) }}
                       </div>
                       <div class="brutal-card" style="margin-bottom: 0;"
-                           [style.background]="getEventCardColor(entry.type)">
+                        [style.background]="getEventCardColor(entry.type)">
                         <!-- Chain of Custody Sticker -->
                         @if (entry.actorId) {
                           <span class="sticker">
                             {{ entry.actorId | uppercase | slice:0:3 }} &bull; {{ formatTimestamp(entry.occurredAt) }}
                           </span>
                         }
-
                         <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
                           <span class="badge" style="background: white; color: black;">{{ entry.type }}</span>
                           <span class="mono" style="font-size: 0.7rem;">{{ entry.occurredAt }}</span>
@@ -194,7 +185,6 @@ import { getSeverityColor } from '../../shared/utils/contrast.util';
                     </div>
                   }
                 </div>
-
                 @if (timeline().length === 0) {
                   <div class="brutal-card" style="text-align: center; padding: 30px;">
                     <p>No timeline events yet.</p>
@@ -203,7 +193,6 @@ import { getSeverityColor } from '../../shared/utils/contrast.util';
               </main>
             </div>
           }
-
           <!-- ==================== BOARD VIEW ==================== -->
           @if (viewMode() === 'board') {
             <div class="board-view-container">
@@ -211,39 +200,34 @@ import { getSeverityColor } from '../../shared/utils/contrast.util';
                 <div class="canvas-container">
                   <!-- Floating Toolbar -->
                   <div class="floating-toolbar">
-                    <cb-board-toolbar></cb-board-toolbar>
+                    <app-board-toolbar></app-board-toolbar>
                   </div>
-
-                  <cb-investigation-board></cb-investigation-board>
+                  <app-investigation-board></app-investigation-board>
                 </div>
               </div>
-
               <div class="board-status-bar">
                 <div class="status-group">
                   <span class="stat-tag">NODES: {{ nodesCount() }}</span>
                   <span class="stat-tag">LINKS: {{ connectionsCount() }}</span>
                   <span class="stat-tag mode-tag">{{ boardMode() | uppercase }} MODE</span>
                 </div>
-
                 <div class="status-group central-group">
                   <span>Grid: {{ isGridVisible() ? 'On' : 'Off' }}</span>
                   <span class="divider">|</span>
                   <span>Zoom: {{ boardZoom() }}%</span>
                   <span class="divider">|</span>
                   <span>Size: {{ gridSize() }}px</span>
-                  <button class="mini-help-btn" (click)="showBoardInstructions()" aria-label="Show Board Instructions">?</button>
+                  <button class="mini-help-btn" (click)="showBoardInstructions()">?</button>
                 </div>
-
                 <div class="status-group hotkeys">
                   <kbd class="kbd">Space</kbd> pan &bull;
                   <kbd class="kbd">Esc</kbd> deselect
                 </div>
               </div>
-
               <!-- Instructions Overlay -->
               @if (showInstructions()) {
-                <div class="instructions-overlay" (click)="dismissBoardInstructions()" (keydown.escape)="dismissBoardInstructions()" (keydown.enter)="dismissBoardInstructions()" tabindex="0" role="button" aria-label="Close instructions">
-                  <div class="brutal-card instructions-card" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Board Instructions" tabindex="-1">
+                <div class="instructions-overlay" role="button" tabindex="0" (click)="dismissBoardInstructions()" (keydown.escape)="dismissBoardInstructions()">
+                  <div class="brutal-card instructions-card" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" role="dialog" aria-modal="true">
                     <h3 style="margin-bottom: 15px;">🧠 Board — Quick Guide</h3>
                     <div class="instructions-content">
                       <div class="instruction-item">
@@ -278,14 +262,14 @@ import { getSeverityColor } from '../../shared/utils/contrast.util';
 
       <!-- Evidence Upload Overlay -->
       @if (showUpload()) {
-        <cb-evidence-upload
+        <app-evidence-upload
           [caseId]="currentCase()?.id || ''"
           (completed)="showUpload.set(false)"
           (cancelled)="showUpload.set(false)"
-        ></cb-evidence-upload>
+        ></app-evidence-upload>
       }
     </div>
-  `,
+    `,
   styles: [`
     :host {
       display: flex;
@@ -629,14 +613,6 @@ import { getSeverityColor } from '../../shared/utils/contrast.util';
       margin: 0;
       color: #666;
       font-size: 0.85rem;
-    }
-
-    .label-text {
-      display: block;
-      font-weight: bold;
-      margin-bottom: 5px;
-      text-transform: uppercase;
-      font-size: 0.8rem;
     }
 
     @media (max-width: 900px) {

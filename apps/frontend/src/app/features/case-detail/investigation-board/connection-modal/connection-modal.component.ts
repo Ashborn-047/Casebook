@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Output, Input, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { ConnectionType, ConnectionStrength } from '@casbook/shared-models';
 
@@ -10,9 +10,9 @@ export interface ConnectionFormData {
 }
 
 @Component({
-    selector: 'cb-connection-modal',
+    selector: 'app-connection-modal',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [FormsModule],
     templateUrl: './connection-modal.component.html',
     styleUrls: ['./connection-modal.component.scss'],
 })

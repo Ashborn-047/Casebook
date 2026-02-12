@@ -1,0 +1,3 @@
+## 2026-02-12 - IndexedDB Sorting & Angular Tracking
+**Learning:** In event-sourced systems like Casebook, fetching and re-sorting events on every state update is a common bottleneck. Using IndexedDB's native indices (`occurredAt`) for fetching ensures $O(1)$ sort overhead from the database's perspective. Additionally, generating fresh UUIDs in computed signals (like the timeline) destroys Angular's DOM tracking, causing full re-renders of the entire list even for single-item additions.
+**Action:** Always use existing stable IDs (like `event.id`) for UI models derived from events and leverage IndexedDB indices for chronological queries.

@@ -1,12 +1,12 @@
 import { Component, OnInit, inject, signal, HostListener } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { CommonModule } from '@angular/common';
+
 import { EventSyncService } from './core/sync/event-sync.service';
 import { CaseStore } from './core/state/case-store.service';
 import { CommandPaletteComponent } from './shared/command-palette/command-palette.component';
 
 @Component({
-  imports: [RouterModule, CommonModule, CommandPaletteComponent],
+  imports: [RouterModule, CommandPaletteComponent],
   selector: 'app-root',
   templateUrl: './app.html',
   styleUrl: './app.scss',

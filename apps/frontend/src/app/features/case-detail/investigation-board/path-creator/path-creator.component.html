@@ -1,10 +1,12 @@
-<div class="brutal-card" style="height: 100%; overflow-y: auto; padding: 15px;">
+<div class="panel-container" style="padding: 15px; overflow-y: auto;">
 
     <!-- Header -->
     <div
-        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid black; padding-bottom: 10px;">
-        <h3 style="margin: 0;">🧭 Investigation Paths</h3>
-        <button class="brutal-btn" style="padding: 4px 10px; font-size: 1rem;" (click)="toggle()">✕</button>
+        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 3px solid black; padding-bottom: 12px;">
+        <h3 style="margin: 0; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;">🧭 Investigation Paths
+        </h3>
+        <button class="brutal-btn mini-btn" style="padding: 2px 8px; font-size: 1.2rem; background: white;"
+            (click)="toggle()">✕</button>
     </div>
 
     <!-- Building Mode -->
@@ -21,56 +23,74 @@
                 placeholder="What does this path demonstrate?" rows="2"></textarea>
         </div>
 
-        <!-- Evidence Picker -->
+        <!-- Evidence Tile Picker -->
         <div class="form-group">
             <label>Select Evidence ({{ selectedEvidenceIds().length }} selected)</label>
-            <div style="max-height: 200px; overflow-y: auto; border: 2px solid black; padding: 5px;">
-                <div *ngFor="let evidence of availableEvidence()"
-                    style="padding: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #eee;"
-                    [style.background]="isSelected(evidence.id) ? 'var(--lime)' : 'white'"
-                    (click)="toggleEvidence(evidence.id)">
-                    <span *ngIf="isSelected(evidence.id)" class="badge"
-                        style="background: black; color: white; padding: 2px 6px;">
+            <div class="evidence-tile-grid">
+                <div *ngFor="let evidence of availableEvidence()" class="evidence-tile"
+                    [class.selected]="isSelected(evidence.id)" (click)="toggleEvidence(evidence.id)">
+
+                    <div *ngIf="isSelected(evidence.id)" class="tile-index">
                         {{ getSequenceNumber(evidence.id) }}
-                    </span>
-                    <span>{{ evidence.visibility === 'restricted' ? '🔒' : '🔍' }}</span>
-                    <span style="font-size: 0.8rem;">{{ evidence.description }}</span>
+                    </div>
+
+                    <div class="tile-icon">
+                        {{ evidence.visibility === 'restricted' ? '🔒' : '🔍' }}
+                    </div>
+                    <div class="tile-title">{{ evidence.description }}</div>
+                    <div style="font-size: 0.55rem; color: #666; font-weight: bold;">
+                        {{ evidence.type | uppercase }}
+                    </div>
                 </div>
-                <div *ngIf="availableEvidence().length === 0" style="padding: 10px; text-align: center; color: #999;">
+
+                <div *ngIf="availableEvidence().length === 0"
+                    style="grid-column: 1/-1; padding: 20px; text-align: center; color: #999;">
                     No evidence available
                 </div>
             </div>
         </div>
 
-        <!-- Sequence Preview -->
-        <div *ngIf="sequencedEvidence().length > 0" class="form-group">
-            <label>Path Sequence</label>
-            <div *ngFor="let ev of sequencedEvidence(); let i = index"
-                style="display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px dashed #ccc;">
-                <span class="badge" style="background: var(--yellow); padding: 2px 8px; font-weight: 900;">{{ i + 1
-                    }}</span>
-                <span style="flex: 1; font-size: 0.8rem;">{{ ev.description }}</span>
-                <button class="brutal-btn" style="padding: 2px 6px; font-size: 0.7rem;" (click)="moveUp(i)"
-                    [disabled]="i === 0">↑</button>
-                <button class="brutal-btn" style="padding: 2px 6px; font-size: 0.7rem;" (click)="moveDown(i)"
-                    [disabled]="i === sequencedEvidence().length - 1">↓</button>
-                <button class="brutal-btn" style="padding: 2px 6px; font-size: 0.7rem; background: var(--pink);"
-                    (click)="removeFromSequence(i)">✕</button>
+        <!-- Narrative Sequence (Arrow Flow) -->
+        <div *ngIf="sequencedEvidence().length > 0" class="form-group" style="margin-top: 25px;">
+            <label>Narrative Flow</label>
+            <div class="narrative-flow">
+                <div *ngFor="let ev of sequencedEvidence(); let i = index" class="sequence-step">
+                    <div class="step-marker">
+                        <div class="step-circle">{{ i + 1 }}</div>
+                        <div class="step-line"></div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-content">
+                            <div style="font-weight: 900; font-size: 0.65rem; color: #666; margin-bottom: 2px;">
+                                STEP {{ i + 1 }}
+                            </div>
+                            {{ ev.description }}
+                        </div>
+                        <div class="step-actions">
+                            <button class="brutal-btn mini-btn" (click)="moveUp(i)" [disabled]="i === 0">↑</button>
+                            <button class="brutal-btn mini-btn" (click)="moveDown(i)"
+                                [disabled]="i === sequencedEvidence().length - 1">↓</button>
+                            <button class="brutal-btn mini-btn" style="background: var(--pink);"
+                                (click)="removeFromSequence(i)">✕</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="form-group">
-            <label>Summary</label>
+        <div class="form-group" style="margin-top: 15px;">
+            <label>Narrative Summary</label>
             <textarea [ngModel]="pathSummary()" (ngModelChange)="pathSummary.set($event)"
-                placeholder="Summarise the narrative" rows="2"></textarea>
+                placeholder="What is the final conclusion of this path?" rows="3"></textarea>
         </div>
 
         <!-- Actions -->
-        <div style="display: flex; gap: 8px; margin-top: 10px;">
-            <button class="brutal-btn" style="flex: 1;" (click)="cancelBuilding()">Cancel</button>
+        <div style="display: flex; gap: 12px; margin-top: 20px;">
+            <button class="brutal-btn" style="flex: 1; background: white;" (click)="cancelBuilding()">Cancel</button>
             <button class="brutal-btn" style="flex: 2; background: var(--lime);" [disabled]="!canSave() || isSaving()"
                 (click)="savePath()">
-                {{ isSaving() ? 'Saving...' : 'Save Path ⚡' }}
+                {{ isSaving() ? 'Saving...' : 'COMMIT PATH ⚡' }}
             </button>
         </div>
     </div>
@@ -78,39 +98,59 @@
     <!-- List Mode -->
     <div *ngIf="!isBuilding()">
         <button *ngIf="canCreate()" class="brutal-btn"
-            style="width: 100%; margin-bottom: 15px; background: var(--lime);" (click)="startBuilding()">
-            + Create New Path
+            style="width: 100%; margin-bottom: 20px; background: var(--lime); padding: 12px; font-weight: 900;"
+            (click)="startBuilding()">
+            + NEW INVESTIGATION PATH
         </button>
 
-        <div *ngIf="savedPaths().length === 0" style="text-align: center; padding: 20px; color: #999;">
-            <p>No investigation paths yet.</p>
-            <p style="font-size: 0.8rem;">Create a path to sequence evidence into a narrative.</p>
+        <div *ngIf="savedPaths().length === 0"
+            style="text-align: center; padding: 40px; color: #999; border: 3px dashed #ccc;">
+            <p style="font-size: 3rem; margin-bottom: 10px;">🧭</p>
+            <p style="font-weight: 900;">NO PATHS YET</p>
+            <p style="font-size: 0.8rem;">Sequence your findings to reveal the bigger picture.</p>
         </div>
 
-        <div *ngFor="let path of savedPaths()" class="brutal-card"
-            style="margin-bottom: 10px; padding: 12px; cursor: pointer;" (click)="togglePath(path.id)">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <span>🧭</span>
+        <div *ngFor="let path of savedPaths()" class="path-preview-card" [class.expanded]="expandedPathId() === path.id"
+            (click)="togglePath(path.id)">
+
+            <div class="path-header">
+                <span style="font-size: 1.5rem;">🧭</span>
                 <div style="flex: 1;">
-                    <h4 style="margin: 0;">{{ path.title }}</h4>
-                    <span style="font-size: 0.75rem; color: #666;">{{ path.sequence.length }} steps · {{ path.createdAt
-                        | date:'short' }}</span>
+                    <h4 style="margin: 0; font-weight: 900; text-transform: uppercase;">{{ path.title }}</h4>
+                    <div class="path-meta">
+                        {{ path.sequence.length }} STEPS · {{ path.createdAt | date:'MMM d, HH:mm' }}
+                    </div>
                 </div>
-                <span>{{ expandedPathId() === path.id ? '▾' : '▸' }}</span>
+                <span style="font-weight: 900; font-size: 1.2rem;">{{ expandedPathId() === path.id ? '▾' : '▸' }}</span>
             </div>
 
+            <!-- Expanded Details -->
             <div *ngIf="expandedPathId() === path.id"
-                style="margin-top: 10px; padding-top: 10px; border-top: 2px solid black;">
-                <p *ngIf="path.description" style="font-size: 0.85rem; margin-bottom: 10px;">{{ path.description }}</p>
-                <div *ngFor="let evidenceId of path.sequence; let i = index"
-                    style="display: flex; align-items: center; gap: 8px; padding: 4px 0;">
-                    <span class="badge" style="background: var(--yellow); padding: 2px 6px;">{{ i + 1 }}</span>
-                    <span style="font-size: 0.8rem;">{{ getEvidenceForId(evidenceId)?.description || evidenceId
-                        }}</span>
-                </div>
-                <p *ngIf="path.summary" style="margin-top: 10px; font-weight: bold; font-size: 0.85rem;">
-                    Summary: {{ path.summary }}
+                style="margin-top: 15px; padding-top: 15px; border-top: 3.5px solid black;">
+                <p *ngIf="path.description" style="font-size: 0.85rem; margin-bottom: 15px; font-style: italic;">
+                    "{{ path.description }}"
                 </p>
+
+                <div class="narrative-flow">
+                    <div *ngFor="let evidenceId of path.sequence; let i = index" class="sequence-step">
+                        <div class="step-marker">
+                            <div class="step-circle" style="background: white;">{{ i + 1 }}</div>
+                            <div class="step-line" style="background: rgba(0,0,0,0.2);"></div>
+                        </div>
+                        <div class="step-card" style="box-shadow: none; border-color: rgba(0,0,0,0.3);">
+                            <div class="step-content">
+                                {{ getEvidenceForId(evidenceId)?.description || 'Unknown Evidence' }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div *ngIf="path.summary" class="path-summary" style="margin-top: 20px;">
+                    <div
+                        style="font-size: 0.65rem; font-weight: 900; letter-spacing: 1px; color: #555; margin-bottom: 5px;">
+                        CONCLUSION</div>
+                    {{ path.summary }}
+                </div>
             </div>
         </div>
     </div>

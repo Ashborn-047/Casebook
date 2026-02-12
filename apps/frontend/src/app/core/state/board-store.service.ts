@@ -1,5 +1,6 @@
 import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { CaseStore } from './case-store.service';
+import { MindPalaceService, SuggestedLink } from '../services/mind-palace.service';
 import {
     BoardState,
     BoardNode,
@@ -9,13 +10,17 @@ import {
     createBoardConnection,
     calculateConnectionPath,
     CaseState,
-    AppEvent
+    AppEvent,
+    ConnectionType,
+    ConnectionStrength,
+    EvidenceTrustLevel
 } from '@casbook/shared-models';
 import { createInitialBoardState } from '@casbook/shared-logic';
 
 @Injectable({ providedIn: 'root' })
 export class BoardStore {
     private caseStore = inject(CaseStore);
+    private mindPalace = inject(MindPalaceService);
 
     // === SIGNAL DEFINITIONS ===
 
@@ -59,6 +64,10 @@ export class BoardStore {
     /** Can undo/redo */
     readonly canUndo = computed(() => this.historyStack().length > 0);
     readonly canRedo = computed(() => this.futureStack().length > 0);
+
+    /** Smart suggestions (ephemeral, in-memory only) */
+    readonly suggestedLinks = signal<SuggestedLink[]>([]);
+    readonly suggestedConnectionCount = computed(() => this.suggestedLinks().length);
 
     // === CONSTRUCTOR ===
 
@@ -152,8 +161,14 @@ export class BoardStore {
         });
     }
 
-    /** Create a connection between nodes */
-    createConnection(sourceNodeId: string, targetNodeId: string, type: string = 'related_to', strength: number = 2): void {
+    /** Create a connection between nodes with mandatory reasoning */
+    createConnection(
+        sourceNodeId: string,
+        targetNodeId: string,
+        type: ConnectionType = 'related_to',
+        strength: ConnectionStrength = 2,
+        reason: string = ''
+    ): void {
         this.saveToHistory();
 
         this.boardState.update(state => {
@@ -171,17 +186,48 @@ export class BoardStore {
                 state.tools.connectionStyle
             );
 
-            const updatedConnection = {
+            const updatedConnection: BoardConnection = {
                 ...connection,
                 path,
+                metadata: {
+                    ...connection.metadata,
+                    label: reason,
+                },
             };
 
             return {
                 ...state,
                 connections: [...state.connections, updatedConnection],
-                mode: 'select' as const, // Return to select mode after connecting
+                mode: 'select' as const,
             };
         });
+
+        // Also fire the event for persistence
+        const caseId = this.boardState().caseId;
+        if (caseId && reason) {
+            const sourceNode = this.boardState().nodes.find(n => n.id === sourceNodeId);
+            const targetNode = this.boardState().nodes.find(n => n.id === targetNodeId);
+            if (sourceNode && targetNode) {
+                const currentUser = this.caseStore.currentUser();
+                const event: AppEvent = {
+                    id: crypto.randomUUID(),
+                    type: 'EVIDENCE_CONNECTED',
+                    actorId: currentUser.id,
+                    actorRole: currentUser.role,
+                    occurredAt: new Date().toISOString(),
+                    payload: {
+                        connectionId: `conn-${crypto.randomUUID().split('-')[0]}`,
+                        caseId,
+                        sourceEvidenceId: sourceNode.dataId,
+                        targetEvidenceId: targetNode.dataId,
+                        connectionType: type,
+                        reason,
+                        strength,
+                    }
+                };
+                this.caseStore.addEvent(event);
+            }
+        }
     }
 
     /** Delete a connection */
@@ -369,6 +415,56 @@ export class BoardStore {
         this.historyStack.set([...history, current]);
         this.futureStack.set(future.slice(1));
         this.boardState.set(nextState);
+    }
+
+    // === MIND PALACE: SMART SUGGESTIONS ===
+
+    /** Run token-based discovery to find potential connections */
+    runDiscovery(): void {
+        const caseState = this.caseStore.currentCase();
+        if (!caseState) return;
+
+        // Build set of existing connection pairs
+        const existingPairs = new Set<string>();
+        for (const conn of this.boardState().connections) {
+            const sourceNode = this.boardState().nodes.find(n => n.id === conn.sourceNodeId);
+            const targetNode = this.boardState().nodes.find(n => n.id === conn.targetNodeId);
+            if (sourceNode && targetNode) {
+                existingPairs.add(this.mindPalace.makePairKey(sourceNode.dataId, targetNode.dataId));
+            }
+        }
+
+        const suggestions = this.mindPalace.discoverLinks(caseState.evidence, existingPairs);
+        this.suggestedLinks.set(suggestions);
+    }
+
+    /** Change the trust level of an evidence item */
+    async changeEvidenceTrust(evidenceId: string, newTrustLevel: EvidenceTrustLevel, reason: string): Promise<void> {
+        const caseState = this.caseStore.currentCase();
+        if (!caseState) return;
+
+        const evidence = caseState.evidence.find(e => e.id === evidenceId);
+        if (!evidence) return;
+
+        const currentUser = this.caseStore.currentUser();
+
+        const event: AppEvent = {
+            id: crypto.randomUUID(),
+            type: 'EVIDENCE_TRUST_CHANGED',
+            actorId: currentUser.id,
+            actorRole: currentUser.role,
+            occurredAt: new Date().toISOString(),
+            payload: {
+                evidenceId,
+                caseId: caseState.id,
+                oldTrustLevel: evidence.trustLevel || 'unverified',
+                newTrustLevel,
+                changedBy: currentUser.id,
+                reason,
+            }
+        };
+
+        await this.caseStore.addEvent(event);
     }
 
     // === PRIVATE METHODS ===

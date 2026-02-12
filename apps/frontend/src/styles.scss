@@ -48,12 +48,37 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+html,
 body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
   background-color: var(--bg);
   color: var(--text);
-  transition: background 0.2s ease;
-  overflow-x: hidden;
-  min-height: 100vh;
+}
+
+app-root {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100vh !important;
+  width: 100vw !important;
+  overflow: hidden;
+  /* Keep app-root itself fixed */
+}
+
+/* The active component rendered after router-outlet should fill the space */
+app-root>*:not(header):not(cb-command-palette):not(router-outlet) {
+  flex: 1;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0;
+  background-color: var(--bg);
+  overflow-y: auto;
+  /* <--- RESTORED SCROLLBAR FOR DASHBOARD/NORMAL PAGES */
+}
+
+router-outlet {
+  display: none;
 }
 
 code,
@@ -65,6 +90,13 @@ pre,
 /* === GLOBAL COMPONENTS === */
 
 .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  width: 100%;
+}
+
+.global-page-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
@@ -130,11 +162,31 @@ pre,
 .cb-header {
   border-bottom: var(--border-width) solid var(--border);
   background: white;
-  padding: 15px 0;
+  padding: 10px 0;
+  /* Compacted from 15px */
   position: sticky;
   top: 0;
   z-index: 100;
   box-shadow: 0 4px 0 rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+/* Slimmer header for board view to maximize workspace */
+body:has(.board-view) .cb-header {
+  padding: 5px 0;
+}
+
+body:has(.board-view) .logo {
+  font-size: 1.2rem;
+}
+
+body:has(.board-view) .role-switcher {
+  padding: 2px;
+}
+
+body:has(.board-view) .role-btn {
+  padding: 4px 12px;
+  font-size: 0.75rem;
 }
 
 .nav-wrapper {
@@ -153,35 +205,12 @@ pre,
 }
 
 .logo {
-  font-size: 1.8rem;
+  font-size: 1.5rem;
+  /* Compacted from 1.8rem */
   font-weight: 900;
   letter-spacing: -1px;
   color: black;
   text-decoration: none;
-}
-
-.role-switcher {
-  display: flex;
-  background: #eee;
-  border: var(--border-width) solid var(--border);
-  padding: 4px;
-}
-
-.role-btn {
-  padding: 6px 16px;
-  border: none;
-  background: none;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.2s;
-  font-size: 0.85rem;
-  font-family: inherit;
-}
-
-.role-btn.active {
-  background: var(--blue);
-  color: white;
-  border: 2px solid black;
 }
 
 /* === NAVIGATION TABS === */

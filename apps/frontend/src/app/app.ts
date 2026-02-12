@@ -4,7 +4,6 @@ import { CommonModule } from '@angular/common';
 import { EventSyncService } from './core/sync/event-sync.service';
 import { CaseStore } from './core/state/case-store.service';
 import { CommandPaletteComponent } from './shared/command-palette/command-palette.component';
-import { UserRole } from '@casbook/shared-models';
 
 @Component({
   imports: [RouterModule, CommonModule, CommandPaletteComponent],
@@ -19,9 +18,6 @@ export class App implements OnInit {
   focusMode = signal(false);
   cmdPaletteOpen = signal(false);
 
-  effectiveRole = () =>
-    this.store.uiState().roleOverride || this.store.currentUser().role;
-
   ngOnInit(): void {
     this.syncService.initialize();
   }
@@ -33,10 +29,6 @@ export class App implements OnInit {
     } else {
       document.body.classList.remove('focus-mode');
     }
-  }
-
-  switchRole(role: string): void {
-    this.store.switchRole(role as UserRole);
   }
 
   @HostListener('document:keydown', ['$event'])

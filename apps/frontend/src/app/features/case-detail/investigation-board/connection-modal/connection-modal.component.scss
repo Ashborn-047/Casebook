@@ -1,0 +1,218 @@
+/* Connection Modal — Neo-Brutalist */
+
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.15s ease;
+}
+
+.modal-container {
+    background: white;
+    border: var(--border-width, 3.5px) solid black;
+    box-shadow: 8px 8px 0 black;
+    width: 460px;
+    max-width: 92vw;
+    max-height: 85vh;
+    overflow-y: auto;
+    animation: slideUp 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.modal-header {
+    background: var(--dark-bg, #1A1A2E);
+    color: white;
+    padding: 16px 20px;
+    border-bottom: var(--border-width, 3.5px) solid black;
+
+    h3 {
+        margin: 0 0 8px 0;
+        font-size: 1.1rem;
+        font-weight: 900;
+    }
+}
+
+.link-preview {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.8rem;
+}
+
+.node-label {
+    background: rgba(255, 255, 255, 0.15);
+    padding: 3px 8px;
+    border-radius: 2px;
+    font-weight: bold;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.link-arrow {
+    font-size: 1.2rem;
+    color: var(--lime, #A6F72E);
+}
+
+.modal-section {
+    padding: 14px 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.section-label {
+    display: block;
+    font-weight: 900;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.required {
+    color: #EF4444;
+}
+
+/* Type Grid */
+.type-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+}
+
+.type-btn {
+    font-size: 0.7rem !important;
+    padding: 6px 4px !important;
+    text-align: center;
+    border: 2px solid black !important;
+    box-shadow: 2px 2px 0 black !important;
+    transition: all 0.1s;
+
+    &.active {
+        background: var(--lime, #A6F72E) !important;
+        transform: translate(2px, 2px);
+        box-shadow: 0 0 0 black !important;
+    }
+}
+
+/* Strength */
+.strength-row {
+    display: flex;
+    gap: 8px;
+}
+
+.strength-btn {
+    flex: 1;
+    font-size: 0.75rem !important;
+    padding: 8px !important;
+    border: 2px solid black !important;
+    box-shadow: 2px 2px 0 black !important;
+
+    &.active {
+        background: var(--blue, #3B82F6) !important;
+        color: white !important;
+        transform: translate(2px, 2px);
+        box-shadow: 0 0 0 black !important;
+    }
+}
+
+/* Token Chips */
+.token-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.token-chip {
+    background: var(--lavender, #C4B5FD);
+    border: 2px solid black;
+    padding: 3px 10px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.1s;
+
+    &:hover {
+        background: var(--yellow, #FFE566);
+        transform: translateY(-1px);
+    }
+}
+
+/* Reason */
+.reason-input {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid black;
+    font-family: inherit;
+    font-size: 0.85rem;
+    resize: vertical;
+    box-sizing: border-box;
+
+    &:focus {
+        outline: 3px solid var(--lime, #A6F72E);
+        outline-offset: 1px;
+    }
+}
+
+.hint-text {
+    font-size: 0.7rem;
+    color: #EF4444;
+    margin-top: 4px;
+    display: block;
+}
+
+/* Actions */
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    padding: 16px 20px;
+    justify-content: flex-end;
+}
+
+.cancel-btn {
+    background: white !important;
+    border: 2px solid black !important;
+    box-shadow: 3px 3px 0 black !important;
+}
+
+.confirm-btn {
+    background: var(--lime, #A6F72E) !important;
+    border: 2px solid black !important;
+    box-shadow: 3px 3px 0 black !important;
+    font-weight: 900;
+
+    &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

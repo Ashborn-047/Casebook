@@ -16,6 +16,18 @@
         </div>
     </section>
 
+    <!-- Mind Palace -->
+    <section class="toolbar-section">
+        <h3 class="section-title">✨ ANALYSIS</h3>
+        <button class="brutal-btn action-btn" style="background: var(--lavender); width: 100%; position: relative;"
+            (click)="scanForLinks()">
+            🔍 Scan for Links
+            <span *ngIf="suggestedConnectionCount() > 0" class="suggestion-badge">
+                {{ suggestedConnectionCount() }}
+            </span>
+        </button>
+    </section>
+
     <!-- View Controls -->
     <section class="toolbar-section">
         <h3 class="section-title">VIEW</h3>
@@ -47,6 +59,8 @@
             </div>
         </div>
     </section>
+
+
 
     <!-- Connection Style -->
     <section class="toolbar-section">

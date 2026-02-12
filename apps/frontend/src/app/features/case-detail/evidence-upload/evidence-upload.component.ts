@@ -30,6 +30,7 @@ export class EvidenceUploadComponent {
     type = signal<'file' | 'text' | 'url'>('text');
     content = signal<string>('');
     description = signal<string>('');
+    tagsString = signal<string>('');
     visibility = signal<'normal' | 'restricted'>('normal');
 
     // Hashing State
@@ -74,13 +75,18 @@ export class EvidenceUploadComponent {
                 throw new Error('Evidence hash missing. Integrity check failed.');
             }
 
+            const tags = this.tagsString()
+                ? this.tagsString().split(',').map(t => t.trim()).filter(t => !!t)
+                : [];
+
             await this.caseStore.addEvidence(
                 this.caseId,
                 this.type(),
                 this.content(),
                 this.computedHash()!,
                 this.description(),
-                this.visibility()
+                this.visibility(),
+                tags
             );
 
             this.completed.emit();
@@ -100,6 +106,7 @@ export class EvidenceUploadComponent {
     private reset(): void {
         this.content.set('');
         this.description.set('');
+        this.tagsString.set('');
         this.selectedFile.set(null);
         this.computedHash.set(null);
     }

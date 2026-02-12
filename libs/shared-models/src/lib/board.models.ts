@@ -210,11 +210,11 @@ function getDefaultIcon(type: BoardNodeType): string {
 
 function getDefaultSize(type: BoardNodeType): { width: number; height: number } {
     switch (type) {
-        case 'evidence': return { width: 200, height: 120 };
-        case 'hypothesis': return { width: 240, height: 160 };
+        case 'evidence': return { width: 200, height: 60 };
+        case 'hypothesis': return { width: 240, height: 70 };
         case 'note': return { width: 180, height: 100 };
         case 'case': return { width: 300, height: 200 };
-        default: return { width: 150, height: 100 };
+        default: return { width: 150, height: 60 };
     }
 }
 

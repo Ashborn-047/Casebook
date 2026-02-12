@@ -43,6 +43,7 @@ export type Action =
     | 'resolve_hypothesis'
     | 'update_layout'
     | 'create_investigation_path'
+    | 'change_evidence_trust'
     | 'view_board';
 
 // ===== PERMISSION MATRIX (Compile-time checked) =====
@@ -82,6 +83,7 @@ export const PERMISSION_MATRIX: Record<UserRole, Record<Action, boolean>> = {
         resolve_hypothesis: false,
         update_layout: false,
         create_investigation_path: false,
+        change_evidence_trust: false,
         view_board: true,
     },
 
@@ -120,6 +122,7 @@ export const PERMISSION_MATRIX: Record<UserRole, Record<Action, boolean>> = {
         resolve_hypothesis: false,
         update_layout: true,
         create_investigation_path: true,
+        change_evidence_trust: true,
         view_board: true,
     },
 
@@ -158,6 +161,7 @@ export const PERMISSION_MATRIX: Record<UserRole, Record<Action, boolean>> = {
         resolve_hypothesis: true,
         update_layout: true,
         create_investigation_path: true,
+        change_evidence_trust: true,
         view_board: true,
     },
 } as const;
@@ -341,6 +345,7 @@ export function eventTypeToAction(eventType: EventType): Action {
         'HYPOTHESIS_RESOLVED': 'resolve_hypothesis',
         'VISUAL_LAYOUT_UPDATED': 'update_layout',
         'INVESTIGATION_PATH_CREATED': 'create_investigation_path',
+        'EVIDENCE_TRUST_CHANGED': 'change_evidence_trust',
     };
 
     return map[eventType] || 'view_case';

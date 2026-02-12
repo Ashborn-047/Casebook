@@ -6,13 +6,11 @@
                 [style.background]="focusMode() ? 'var(--pink)' : 'white'">
                 👁️ Focus
             </button>
-            <div class="role-switcher">
-                <button class="role-btn" [class.active]="effectiveRole() === 'investigator'"
-                    (click)="switchRole('investigator')">Investigator</button>
-                <button class="role-btn" [class.active]="effectiveRole() === 'supervisor'"
-                    (click)="switchRole('supervisor')">Supervisor</button>
-                <button class="role-btn" [class.active]="effectiveRole() === 'viewer'"
-                    (click)="switchRole('viewer')">Viewer</button>
+            <div class="header-controls">
+                <button class="brutal-btn" style="padding: 6px 12px; font-size: 0.8rem;" (click)="toggleFocusMode()"
+                    [style.background]="focusMode() ? 'var(--pink)' : 'white'">
+                    👁️ Focus Mode
+                </button>
             </div>
         </div>
     </div>

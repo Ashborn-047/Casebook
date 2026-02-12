@@ -55,6 +55,13 @@
                 placeholder="What does this evidence represent?"></textarea>
         </div>
 
+        <!-- Tags -->
+        <div class="form-group">
+            <label>Tags (comma separated)</label>
+            <input type="text" [ngModel]="tagsString()" (ngModelChange)="tagsString.set($event)"
+                placeholder="e.g. server-log, access, j_doe">
+        </div>
+
         <!-- Access Level -->
         <div class="form-group" style="display: flex; gap: 10px; align-items: center;">
             <input type="checkbox" style="width: 20px; height: 20px;" [checked]="visibility() === 'restricted'"

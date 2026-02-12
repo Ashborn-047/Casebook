@@ -25,40 +25,47 @@ import { getSeverityColor } from '../../shared/utils/contrast.util';
     TimeTravelDebuggerComponent
   ],
   template: `
-    <div class="container">
-      <!-- View Mode Tabs -->
-      <div class="tabs">
-        <button class="brutal-btn"
-          [style.background]="viewMode() === 'timeline' ? 'var(--lime)' : 'white'"
-          (click)="setViewMode('timeline')">📋 Timeline</button>
-        <button class="brutal-btn"
-          [style.background]="viewMode() === 'board' ? 'var(--yellow)' : 'white'"
-          [disabled]="!canViewBoard"
-          (click)="setViewMode('board')">🧠 Board</button>
-        <button class="brutal-btn"
-          [style.background]="showTimeTravel() ? 'var(--orange)' : 'white'"
-          [disabled]="!canTimeTravel"
-          (click)="showTimeTravel.set(!showTimeTravel())">⏳ Time Travel</button>
-        <button class="brutal-btn"
-          style="background: var(--pink);"
-          *ngIf="canAddEvidence"
-          (click)="showUpload.set(true)">📎 Upload</button>
-        <button class="brutal-btn" (click)="goBack()">← Back</button>
+    <div class="case-detail-host" [class.board-view]="viewMode() === 'board'">
+      <!-- Case Meta Bar (Integrated Header) -->
+      <div class="case-meta-bar" *ngIf="currentCase()">
+        <div class="meta-left">
+          <button class="back-btn brutal-btn" (click)="goBack()" title="Back to Cases">←</button>
+          <div class="case-title-stack">
+            <span class="case-id">#{{ currentCase()?.id?.slice(-6)?.toUpperCase() }}</span>
+            <h1 class="case-title">{{ caseTitle }}</h1>
+          </div>
+        </div>
 
-        <!-- Export Buttons -->
-        <button class="brutal-btn" title="Export JSON" (click)="exportJson()">📄 JSON</button>
-        <button class="brutal-btn" title="Export PDF" (click)="exportPdf()">📕 PDF</button>
-
-        <!-- Save Board Layout (only in board view) -->
-        <button class="brutal-btn"
-          *ngIf="viewMode() === 'board'"
-          [disabled]="!canUpdateLayout"
-          style="background: var(--blue); color: white;"
-          (click)="saveBoardLayout()">💾 Save Layout</button>
+        <div class="meta-center">
+          <div class="segmented-control">
+            <button [class.active]="viewMode() === 'timeline'" (click)="setViewMode('timeline')">
+              📋 TIMELINE
+            </button>
+            <button [class.active]="viewMode() === 'board'" (click)="setViewMode('board')">
+              🧠 MIND PALACE
+            </button>
+          </div>
+        </div>
+        
+        <div class="meta-right">
+          <button class="brutal-btn tool-btn" 
+            [class.active]="showTimeTravel()"
+            (click)="showTimeTravel.set(!showTimeTravel())"
+            title="Toggle Time Travel">
+            ⏳
+          </button>
+          <button class="brutal-btn tool-btn upload-trigger" (click)="showUpload.set(true)" title="Upload Evidence">
+            📎
+          </button>
+          <div class="export-tray">
+            <button (click)="exportJson()">JSON</button>
+            <button (click)="exportPdf()">PDF</button>
+          </div>
+        </div>
       </div>
 
       <!-- Time Travel Debugger -->
-      <div *ngIf="showTimeTravel()" style="margin-bottom: 20px;">
+      <div *ngIf="showTimeTravel()" style="margin-bottom: 20px; flex-shrink: 0;">
         <cb-time-travel-debugger></cb-time-travel-debugger>
       </div>
 
@@ -75,7 +82,7 @@ import { getSeverityColor } from '../../shared/utils/contrast.util';
       </div>
 
       <!-- Main Content -->
-      <div *ngIf="!store.uiState().isLoading && currentCase()">
+      <div *ngIf="!store.uiState().isLoading && currentCase()" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
 
         <!-- ==================== TIMELINE VIEW ==================== -->
         <div *ngIf="viewMode() === 'timeline'" class="case-detail-layout">
@@ -128,15 +135,6 @@ import { getSeverityColor } from '../../shared/utils/contrast.util';
               </div>
 
               <hr style="border: 1px solid black; margin: 15px 0;">
-
-              <!-- Permissions -->
-              <label>Your Permissions</label>
-              <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px;">
-                <span *ngIf="canAddEvidence" class="badge" style="background: white; font-size: 0.65rem;">Add Evidence</span>
-                <span *ngIf="canCreateConnections" class="badge" style="background: white; font-size: 0.65rem;">Connect</span>
-                <span *ngIf="canCreateHypotheses" class="badge" style="background: white; font-size: 0.65rem;">Hypothesize</span>
-                <span *ngIf="canCloseCase" class="badge" style="background: white; font-size: 0.65rem;">Close Case</span>
-              </div>
             </div>
           </aside>
 
@@ -185,38 +183,34 @@ import { getSeverityColor } from '../../shared/utils/contrast.util';
 
         <!-- ==================== BOARD VIEW ==================== -->
         <div *ngIf="viewMode() === 'board'" class="board-view-container">
-          <div class="board-header-bar">
-            <div style="display: flex; align-items: center; gap: 15px;">
-              <h2>🧠 Investigation Board</h2>
-              <button class="brutal-btn" style="padding: 6px 12px; font-size: 0.75rem;" (click)="showBoardInstructions()">❓ Help</button>
-            </div>
-            <div class="board-stats">
-              <span>{{ nodesCount() }} nodes</span>
-              <span style="color: #999;">|</span>
-              <span>{{ connectionsCount() }} connections</span>
-              <span style="color: #999;">|</span>
-              <span>{{ boardMode() | titlecase }} mode</span>
-            </div>
-          </div>
-
           <div class="board-layout">
-            <div class="toolbar-sidebar brutal-card">
-              <cb-board-toolbar></cb-board-toolbar>
-            </div>
             <div class="canvas-container">
+              <!-- Floating Toolbar -->
+              <div class="floating-toolbar">
+                <cb-board-toolbar></cb-board-toolbar>
+              </div>
+
               <cb-investigation-board></cb-investigation-board>
             </div>
           </div>
 
           <div class="board-status-bar">
-            <div style="display: flex; align-items: center; gap: 12px; font-size: 0.85rem;">
-              <span>Grid: {{ isGridVisible() ? 'On' : 'Off' }}</span>
-              <span style="color: #999;">|</span>
-              <span>Zoom: {{ boardZoom() }}%</span>
-              <span style="color: #999;">|</span>
-              <span>Grid Size: {{ gridSize() }}px</span>
+            <div class="status-group">
+              <span class="stat-tag">NODES: {{ nodesCount() }}</span>
+              <span class="stat-tag">LINKS: {{ connectionsCount() }}</span>
+              <span class="stat-tag mode-tag">{{ boardMode() | uppercase }} MODE</span>
             </div>
-            <div style="font-size: 0.8rem;">
+
+            <div class="status-group central-group">
+              <span>Grid: {{ isGridVisible() ? 'On' : 'Off' }}</span>
+              <span class="divider">|</span>
+              <span>Zoom: {{ boardZoom() }}%</span>
+              <span class="divider">|</span>
+              <span>Size: {{ gridSize() }}px</span>
+              <button class="mini-help-btn" (click)="showBoardInstructions()">?</button>
+            </div>
+
+            <div class="status-group hotkeys">
               <kbd class="kbd">Space</kbd> pan &bull;
               <kbd class="kbd">Esc</kbd> deselect
             </div>
@@ -264,74 +258,309 @@ import { getSeverityColor } from '../../shared/utils/contrast.util';
     </div>
   `,
   styles: [`
+    :host {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      height: 100%;
+      width: 100%;
+    }
+
+    .case-detail-host {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+      width: 100%;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow-y: auto;
+    }
+
+    .case-detail-host.board-view {
+      max-width: none !important;
+      padding: 0 !important;
+      overflow: hidden;
+    }
+
+    .main-content-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    /* === NEW PREMIUM HEADER === */
+    .case-meta-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 15px;
+      background: white;
+      border: 3px solid black;
+      box-shadow: 4px 4px 0 black;
+      margin-top: 10px;
+      margin-bottom: 8px;
+      z-index: 100;
+      flex-shrink: 0;
+      gap: 15px;
+    }
+
+    .meta-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .meta-center {
+      display: flex;
+      justify-content: center;
+      flex: 1;
+    }
+
+    .meta-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: flex-end;
+      flex: 1;
+    }
+
+    .case-title-stack {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .case-id {
+      font-size: 0.6rem;
+      font-weight: 900;
+      color: #666;
+      letter-spacing: 1px;
+    }
+
+    .case-title {
+      font-size: 1rem;
+      font-weight: 900;
+      margin: 0;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    .segmented-control {
+      display: flex;
+      background: #eee;
+      border: 2px solid black;
+      padding: 0;
+      overflow: hidden;
+      border-radius: 4px;
+    }
+
+    .segmented-control button {
+      border: none;
+      border-right: 2px solid black;
+      padding: 4px 15px;
+      font-weight: 900;
+      font-size: 0.7rem;
+      cursor: pointer;
+      background: transparent;
+      transition: all 0.2s;
+    }
+
+    .segmented-control button:last-child {
+      border-right: none;
+    }
+
+    .segmented-control button.active {
+      background: var(--lime);
+    }
+
+    .segmented-control button[disabled] {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .meta-right .tool-btn {
+      padding: 4px 8px !important;
+      font-size: 0.8rem !important;
+      background: white;
+      border: 2px solid black;
+    }
+
+    .meta-right .tool-btn.active {
+      background: var(--pink);
+    }
+
+    .export-tray {
+      display: flex;
+      border: 2px solid black;
+      background: black;
+      gap: 2px;
+      padding: 2px;
+    }
+
+    .export-tray button {
+      background: white;
+      border: none;
+      padding: 2px 6px;
+      font-size: 0.6rem;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .export-tray button:hover {
+      background: var(--yellow);
+    }
+
+    .toggle-btn {
+      font-size: 0.8rem;
+      font-weight: 900;
+      background: white;
+      padding: 10px 20px;
+    }
+
+    .toggle-btn.active {
+      background: var(--orange);
+      box-shadow: inset 4px 4px 0 rgba(0,0,0,0.2);
+    }
+
+    .back-btn {
+      padding: 10px 15px;
+      background: white;
+      font-size: 1.2rem;
+    }
+
+    .case-detail-layout {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 20px;
+    }
+
     .board-view-container {
       display: flex;
       flex-direction: column;
-      height: calc(100vh - 180px);
-      min-height: 600px;
+      flex: 1;
+      min-height: 0;
+      padding-bottom: 5px;
     }
 
     .board-header-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 16px;
-      padding: 12px 16px;
+      margin-bottom: 5px;
+      padding: 5px 15px;
       background: white;
-      border: var(--border-width) solid var(--border);
-      box-shadow: var(--shadow);
-      flex-wrap: wrap;
+      border: 3px solid black;
+      box-shadow: 4px 4px 0 black;
+      flex-shrink: 0;
       gap: 10px;
     }
 
     .board-stats {
       display: flex;
       align-items: center;
-      gap: 12px;
-      font-size: 0.85rem;
+      gap: 10px;
+      font-size: 0.7rem;
       font-weight: bold;
+      text-transform: uppercase;
     }
 
     .board-layout {
-      display: flex;
       flex: 1;
-      gap: 16px;
+      display: flex;
       min-height: 0;
-    }
-
-    .toolbar-sidebar {
-      width: 280px;
-      flex-shrink: 0;
-      overflow-y: auto;
     }
 
     .canvas-container {
       flex: 1;
-      border: var(--border-width) solid var(--border);
+      border: 3px solid black;
       overflow: hidden;
       background: var(--dark-bg);
+      position: relative;
+    }
+
+    .floating-toolbar {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 100;
+      width: 170px;
+      max-height: calc(100% - 20px);
+      overflow-y: auto;
+      background: #f8f8f8;
+      border: 3px solid black;
+      box-shadow: 4px 4px 0 black;
+      padding: 0;
     }
 
     .board-status-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 10px 16px;
-      margin-top: 16px;
+      padding: 4px 15px;
       background: white;
-      border: var(--border-width) solid var(--border);
-      box-shadow: var(--shadow);
-      flex-wrap: wrap;
+      border: 3px solid black;
+      border-top: none;
+      flex-shrink: 0;
+      font-size: 0.7rem;
+      font-weight: bold;
+    }
+
+    .status-group {
+      display: flex;
+      align-items: center;
       gap: 10px;
+    }
+
+    .stat-tag {
+      background: var(--lime);
+      padding: 2px 8px;
+      border: 2px solid black;
+    }
+
+    .mode-tag {
+      background: var(--yellow);
+    }
+
+    .divider {
+      color: #999;
+      margin: 0 5px;
+    }
+
+    .mini-help-btn {
+      background: black;
+      color: white;
+      border: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      font-size: 0.65rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 5px;
+    }
+
+    .mini-help-btn:hover {
+      background: var(--pink);
+    }
+
+    .hotkeys {
+      font-size: 0.65rem;
     }
 
     .kbd {
       display: inline-block;
-      padding: 2px 6px;
+      padding: 1px 4px;
       background: #eee;
-      border: 2px solid black;
+      border: 1.5px solid black;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.75rem;
+      font-size: 0.65rem;
+      border-radius: 3px;
     }
 
     .instructions-overlay {
@@ -421,13 +650,6 @@ export class CaseDetailContainerComponent {
   get daysOpen(): number { return this.currentCase()?.daysOpen || 0; }
   get pathsCount(): number { return this.currentCase()?.investigationPaths?.length || 0; }
 
-  get canViewBoard(): boolean { return this.currentCase()?.permissions?.canViewBoard || false; }
-  get canAddEvidence(): boolean { return this.currentCase()?.permissions?.canAddEvidence || false; }
-  get canCreateConnections(): boolean { return this.currentCase()?.permissions?.canCreateConnections || false; }
-  get canCreateHypotheses(): boolean { return this.currentCase()?.permissions?.canCreateHypotheses || false; }
-  get canCloseCase(): boolean { return this.currentCase()?.permissions?.canCloseCase || false; }
-  get canUpdateLayout(): boolean { return this.currentCase()?.permissions?.canUpdateLayout || false; }
-  get canTimeTravel(): boolean { return this.currentCase()?.permissions?.canTimeTravel || false; }
 
   getEventIcon(type: string): string {
     if (type.includes('EVIDENCE')) return '💾';
@@ -453,15 +675,7 @@ export class CaseDetailContainerComponent {
   }
 
   setViewMode(mode: 'timeline' | 'board'): void {
-    if (mode === 'board' && !this.canViewBoard) {
-      return;
-    }
     this.viewMode.set(mode);
-  }
-
-  switchRole(event: Event): void {
-    const role = (event.target as HTMLSelectElement).value as UserRole;
-    this.store.switchRole(role);
   }
 
   goBack(): void {

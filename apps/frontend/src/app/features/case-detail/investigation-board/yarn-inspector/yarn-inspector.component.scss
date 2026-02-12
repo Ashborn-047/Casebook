@@ -1,0 +1,132 @@
+/* Yarn Inspector — Neo-Brutalist Popover */
+
+.inspector-popover {
+    position: absolute;
+    z-index: 200;
+    background: white;
+    border: 3px solid black;
+    box-shadow: 6px 6px 0 black;
+    width: 280px;
+    animation: popIn 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transform: translate(-50%, -100%) translateY(-12px);
+}
+
+.inspector-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--dark-bg, #1A1A2E);
+    color: white;
+    border-bottom: 3px solid black;
+}
+
+.type-badge {
+    font-size: 0.75rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 2px 6px;
+
+    &:hover {
+        color: var(--pink, #FF6B9D);
+    }
+}
+
+.inspector-body {
+    padding: 4px 0;
+}
+
+.inspector-field {
+    padding: 8px 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.field-label {
+    font-size: 0.6rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #999;
+    margin-bottom: 4px;
+}
+
+.field-value {
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.field-value.reason {
+    font-weight: normal;
+    font-style: italic;
+    color: #444;
+}
+
+.strength-dot {
+    color: #ddd;
+    font-size: 0.9rem;
+    margin-right: 2px;
+
+    &.filled {
+        color: var(--blue, #3B82F6);
+    }
+}
+
+.strength-text {
+    font-size: 0.7rem;
+    margin-left: 6px;
+    color: #666;
+}
+
+.token-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.token-pill {
+    background: var(--lavender, #C4B5FD);
+    border: 1.5px solid black;
+    padding: 1px 8px;
+    font-size: 0.65rem;
+    font-weight: bold;
+}
+
+.inspector-footer {
+    display: flex;
+    gap: 6px;
+    padding: 8px 12px;
+    justify-content: flex-end;
+}
+
+.dispute-btn {
+    font-size: 0.65rem !important;
+    padding: 4px 8px !important;
+    background: var(--yellow, #FFE566) !important;
+}
+
+.delete-btn {
+    font-size: 0.65rem !important;
+    padding: 4px 8px !important;
+    background: var(--pink, #FF6B9D) !important;
+}
+
+@keyframes popIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -100%) translateY(-12px) scale(0.8);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, -100%) translateY(-12px) scale(1);
+    }
+}

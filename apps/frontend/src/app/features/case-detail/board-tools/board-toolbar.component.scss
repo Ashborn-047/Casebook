@@ -1,18 +1,18 @@
 .toolbar-container {
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    padding: 5px;
+    gap: 10px;
+    padding: 3px;
 }
 
 .section-title {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 900;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 10px;
-    border-bottom: 2px solid black;
-    padding-bottom: 5px;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    border-bottom: 1.5px solid black;
+    padding-bottom: 3px;
 }
 
 .toolbar-section {
@@ -22,13 +22,13 @@
 .mode-grid {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
 }
 
 .tool-btn {
     width: 100%;
-    padding: 8px 12px !important;
-    font-size: 0.8rem !important;
+    padding: 6px 10px !important;
+    font-size: 0.75rem !important;
     justify-content: flex-start !important;
 }
 
@@ -95,4 +95,33 @@
     display: flex;
     justify-content: space-between;
     font-size: 0.8rem;
+}
+
+.suggestion-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: var(--pink, #FF6B9D);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 900;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid black;
+    box-shadow: 2px 2px 0 black;
+    animation: bounce 0.5s infinite alternate;
+}
+
+@keyframes bounce {
+    from {
+        transform: translateY(0);
+    }
+
+    to {
+        transform: translateY(-3px);
+    }
 }

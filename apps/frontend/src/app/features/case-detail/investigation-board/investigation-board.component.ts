@@ -12,19 +12,23 @@ import {
 import { CommonModule } from '@angular/common';
 import { BoardStore } from '../../../core/state/board-store.service';
 import { CaseStore } from '../../../core/state/case-store.service';
-import { BoardNode, BoardConnection } from '@casbook/shared-models';
+import { MindPalaceService } from '../../../core/services/mind-palace.service';
+import { BoardNode, BoardConnection, ConnectionType, ConnectionStrength } from '@casbook/shared-models';
 import { PathCreatorComponent } from './path-creator/path-creator.component';
+import { ConnectionModalComponent, ConnectionFormData } from './connection-modal/connection-modal.component';
+import { YarnInspectorComponent } from './yarn-inspector/yarn-inspector.component';
 
 @Component({
     selector: 'cb-investigation-board',
     standalone: true,
-    imports: [CommonModule, PathCreatorComponent],
+    imports: [CommonModule, PathCreatorComponent, ConnectionModalComponent, YarnInspectorComponent],
     templateUrl: './investigation-board.component.html',
     styleUrls: ['./investigation-board.component.scss']
 })
 export class InvestigationBoardComponent implements OnInit, AfterViewInit {
     private boardStore = inject(BoardStore);
     private caseStore = inject(CaseStore);
+    private mindPalace = inject(MindPalaceService);
 
     @ViewChild('boardContainer') boardContainer!: ElementRef<HTMLDivElement>;
 
@@ -65,6 +69,19 @@ export class InvestigationBoardComponent implements OnInit, AfterViewInit {
     // Math for template
     Math = Math;
 
+    // Connection Modal state
+    showConnectionModal = signal(false);
+    pendingSourceNodeId: string | null = null;
+    pendingTargetNodeId: string | null = null;
+    pendingSourceLabel = signal('');
+    pendingTargetLabel = signal('');
+    pendingSuggestedTokens = signal<string[]>([]);
+
+    // Yarn Inspector state
+    showYarnInspector = signal(false);
+    inspectedConnection = signal<BoardConnection | null>(null);
+    yarnInspectorPos = signal({ x: 0, y: 0 });
+
     ngOnInit(): void {
         const caseState = this.caseStore.currentCase();
         if (caseState) {
@@ -93,7 +110,18 @@ export class InvestigationBoardComponent implements OnInit, AfterViewInit {
             } else if (this.mode() === 'connect' && this.connectionSource) {
                 const targetNode = this.boardStore.findNodeAtPosition(boardPos.x, boardPos.y);
                 if (targetNode && targetNode.id !== this.connectionSource) {
-                    this.boardStore.createConnection(this.connectionSource, targetNode.id);
+                    // Instead of instant connection, show the "Why?" modal
+                    this.pendingSourceNodeId = this.connectionSource;
+                    this.pendingTargetNodeId = targetNode.id;
+
+                    const srcNode = this.nodes().find(n => n.id === this.connectionSource);
+                    this.pendingSourceLabel.set(srcNode ? this.getNodeTitle(srcNode) : 'Evidence A');
+                    this.pendingTargetLabel.set(this.getNodeTitle(targetNode));
+
+                    // Find shared tokens for suggestion chips
+                    this.pendingSuggestedTokens.set(this.findSharedTokens(this.connectionSource, targetNode.id));
+
+                    this.showConnectionModal.set(true);
                 }
                 this.isDrawingConnection = false;
                 this.connectionSource = null;
@@ -227,6 +255,11 @@ export class InvestigationBoardComponent implements OnInit, AfterViewInit {
     getNodeTitle(node: BoardNode): string {
         const data = this.getNodeData(node);
         if (!data) return `Node ${node.id.slice(0, 8)}`;
+
+        if (node.type === 'evidence') {
+            return (data['description'] as string) || `Evidence ${node.id.slice(0, 8)}`;
+        }
+
         const title = data['title'] as string | undefined;
         const description = data['description'] as string | undefined;
         return title || description?.substring(0, 30) || `Node ${node.id.slice(0, 8)}`;
@@ -235,6 +268,11 @@ export class InvestigationBoardComponent implements OnInit, AfterViewInit {
     getNodeDescription(node: BoardNode): string {
         const data = this.getNodeData(node);
         if (!data) return 'No description';
+
+        if (node.type === 'evidence') {
+            return (data['content'] as string) || (data['description'] as string) || 'No content';
+        }
+
         const description = data['description'] as string | undefined;
         return description || 'No description';
     }
@@ -370,7 +408,142 @@ export class InvestigationBoardComponent implements OnInit, AfterViewInit {
                 this.isDrawingConnection = false;
                 this.connectionSource = null;
                 this.tempConnection.set(null);
+                this.showConnectionModal.set(false);
+                this.showYarnInspector.set(false);
                 break;
         }
+    }
+
+    // === CONNECTION MODAL HANDLERS ===
+
+    /** Find shared tokens between two nodes' evidence content */
+    findSharedTokens(sourceNodeId: string, targetNodeId: string): string[] {
+        const caseState = this.caseStore.currentCase();
+        if (!caseState) return [];
+
+        const srcNode = this.nodes().find(n => n.id === sourceNodeId);
+        const tgtNode = this.nodes().find(n => n.id === targetNodeId);
+        if (!srcNode || !tgtNode) return [];
+
+        const srcEvidence = caseState.evidence.find(e => e.id === srcNode.dataId);
+        const tgtEvidence = caseState.evidence.find(e => e.id === tgtNode.dataId);
+        if (!srcEvidence || !tgtEvidence) return [];
+
+        const srcTokens = this.mindPalace.extractTokens(srcEvidence);
+        const tgtTokens = this.mindPalace.extractTokens(tgtEvidence);
+
+        const shared: string[] = [];
+        for (const token of srcTokens) {
+            if (tgtTokens.has(token)) {
+                shared.push(token);
+            }
+        }
+        return shared.slice(0, 10); // Cap at 10
+    }
+
+    /** Handle modal confirmation */
+    onConnectionConfirmed(data: ConnectionFormData): void {
+        if (this.pendingSourceNodeId && this.pendingTargetNodeId) {
+            this.boardStore.createConnection(
+                this.pendingSourceNodeId,
+                this.pendingTargetNodeId,
+                data.connectionType,
+                data.strength,
+                data.reason
+            );
+        }
+        this.resetConnectionModal();
+    }
+
+    /** Handle modal cancellation */
+    onConnectionCancelled(): void {
+        this.resetConnectionModal();
+    }
+
+    private resetConnectionModal(): void {
+        this.showConnectionModal.set(false);
+        this.pendingSourceNodeId = null;
+        this.pendingTargetNodeId = null;
+        this.pendingSourceLabel.set('');
+        this.pendingTargetLabel.set('');
+        this.pendingSuggestedTokens.set([]);
+    }
+
+    // === YARN INSPECTOR ===
+
+    /** Handle click on a connection path to show the inspector */
+    onYarnClick(connectionId: string, event: MouseEvent): void {
+        if (this.mode() === 'delete') {
+            this.onConnectionClick(connectionId);
+            return;
+        }
+
+        event.stopPropagation();
+        const connection = this.connections().find(c => c.id === connectionId);
+        if (!connection) return;
+
+        const midpoint = this.getConnectionMidpoint(connection);
+        this.inspectedConnection.set(connection);
+        this.yarnInspectorPos.set(midpoint);
+        this.showYarnInspector.set(true);
+    }
+
+    onYarnInspectorClose(): void {
+        this.showYarnInspector.set(false);
+        this.inspectedConnection.set(null);
+    }
+
+    onYarnDeleted(): void {
+        const connection = this.inspectedConnection();
+        if (connection) {
+            this.boardStore.deleteConnection(connection.id);
+        }
+        this.onYarnInspectorClose();
+    }
+
+    // === TRUST LEVEL HELPERS ===
+
+    getEvidenceTrustBadge(node: BoardNode): string {
+        const caseState = this.caseStore.currentCase();
+        if (!caseState) return '🟡';
+
+        const evidence = caseState.evidence.find(e => e.id === node.dataId);
+        if (!evidence) return '🟡';
+
+        const badges: Record<string, string> = {
+            'unverified': '🟡',
+            'verified': '🟢',
+            'disputed': '🔴',
+            'disproven': '⚫',
+        };
+
+        return badges[evidence.trustLevel] || '🟡';
+    }
+
+    getEvidenceTrustLevel(node: BoardNode): string {
+        const caseState = this.caseStore.currentCase();
+        if (!caseState) return 'unverified';
+        const evidence = caseState.evidence.find(e => e.id === node.dataId);
+        return evidence?.trustLevel || 'unverified';
+    }
+
+    /** Get connection visual class based on linked evidence trust levels */
+    getConnectionTrustClass(connection: BoardConnection): string {
+        const caseState = this.caseStore.currentCase();
+        if (!caseState) return '';
+
+        const srcNode = this.nodes().find(n => n.id === connection.sourceNodeId);
+        const tgtNode = this.nodes().find(n => n.id === connection.targetNodeId);
+        if (!srcNode || !tgtNode) return '';
+
+        const srcEvidence = caseState.evidence.find(e => e.id === srcNode.dataId);
+        const tgtEvidence = caseState.evidence.find(e => e.id === tgtNode.dataId);
+
+        const srcTrust = srcEvidence?.trustLevel || 'unverified';
+        const tgtTrust = tgtEvidence?.trustLevel || 'unverified';
+
+        if (srcTrust === 'disproven' || tgtTrust === 'disproven') return 'yarn-disproven';
+        if (srcTrust === 'disputed' || tgtTrust === 'disputed') return 'yarn-disputed';
+        return '';
     }
 }

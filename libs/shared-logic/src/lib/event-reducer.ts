@@ -17,6 +17,7 @@ import {
     HypothesisResolvedEvent,
     VisualLayoutUpdatedEvent,
     InvestigationPathCreatedEvent,
+    EvidenceTrustChangedEvent,
     CaseStatus,
     ConnectionType,
     ConnectionStrength
@@ -118,6 +119,9 @@ function applyEvent(state: CaseState, event: AppEvent): CaseState {
         case 'INVESTIGATION_PATH_CREATED':
             return applyInvestigationPathCreated(state, event);
 
+        case 'EVIDENCE_TRUST_CHANGED':
+            return applyEvidenceTrustChanged(state, event);
+
         default: {
             // Exhaustiveness check for TypeScript
             const check: never = event as never;
@@ -194,6 +198,7 @@ function applyEvidenceAdded(state: CaseState, event: EvidenceAddedEvent): CaseSt
         visibility: event.payload.visibility,
         version: 1,
         tags: [...event.payload.tags],
+        trustLevel: 'unverified',
     };
 
     const restrictedCount = event.payload.visibility === 'restricted'
@@ -525,6 +530,33 @@ function applyInvestigationPathCreated(state: CaseState, event: InvestigationPat
 }
 
 // ===== HELPER FUNCTIONS =====
+
+function applyEvidenceTrustChanged(state: CaseState, event: EvidenceTrustChangedEvent): CaseState {
+    const evidenceIndex = state.evidence.findIndex(
+        e => e.id === event.payload.evidenceId
+    );
+
+    if (evidenceIndex === -1) return state;
+
+    const evidence = state.evidence[evidenceIndex];
+    const updatedEvidence = {
+        ...evidence,
+        trustLevel: event.payload.newTrustLevel,
+    };
+
+    const newEvidence = [...state.evidence];
+    newEvidence[evidenceIndex] = updatedEvidence;
+
+    return {
+        ...state,
+        evidence: newEvidence,
+        updatedAt: event.occurredAt,
+        lastActivityAt: event.occurredAt,
+        eventIds: [...state.eventIds, event.id],
+    };
+}
+
+// ===== HELPER FUNCTIONS  =====
 
 function getConnectionColor(type: ConnectionType): string {
     const colors: Record<ConnectionType, string> = {

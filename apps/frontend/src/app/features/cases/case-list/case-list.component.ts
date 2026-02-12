@@ -14,21 +14,21 @@ import { getSeverityColor } from '../../../shared/utils/contrast.util';
     <div class="container">
       <!-- Stats Grid -->
       <div class="stats-grid">
-        <div class="brutal-card stat-card">
-          <div style="font-size: 0.8rem; font-weight: bold;">TOTAL CASES</div>
-          <div style="font-size: 2.5rem; font-weight: 900;">{{ caseSummaries().length }}</div>
+        <div class="brutal-card stat-card" style="background: var(--lime); border-color: black;">
+          <div style="font-size: 0.7rem; font-weight: 900; letter-spacing: 1px; color: rgba(0,0,0,0.6);">ACTIVE CASES</div>
+          <div style="font-size: 2.8rem; font-weight: 900; line-height: 1;">{{ activeCases() }}</div>
         </div>
-        <div class="brutal-card stat-card">
-          <div style="font-size: 0.8rem; font-weight: bold;">EVIDENCE ITEMS</div>
-          <div style="font-size: 2.5rem; font-weight: 900;">{{ totalEvidence() }}</div>
+        <div class="brutal-card stat-card" style="background: var(--pink); border-color: black;">
+          <div style="font-size: 0.7rem; font-weight: 900; letter-spacing: 1px; color: rgba(0,0,0,0.6);">EVIDENCE CLUES</div>
+          <div style="font-size: 2.8rem; font-weight: 900; line-height: 1;">{{ totalEvidence() }}</div>
         </div>
-        <div class="brutal-card stat-card">
-          <div style="font-size: 0.8rem; font-weight: bold;">CONNECTIONS</div>
-          <div style="font-size: 2.5rem; font-weight: 900;">{{ totalConnections() }}</div>
+        <div class="brutal-card stat-card" style="background: var(--yellow); border-color: black;">
+          <div style="font-size: 0.7rem; font-weight: 900; letter-spacing: 1px; color: rgba(0,0,0,0.6);">INVESTIGATION LINKS</div>
+          <div style="font-size: 2.8rem; font-weight: 900; line-height: 1;">{{ totalConnections() }}</div>
         </div>
-        <div class="brutal-card stat-card">
-          <div style="font-size: 0.8rem; font-weight: bold;">HYPOTHESES</div>
-          <div style="font-size: 2.5rem; font-weight: 900;">{{ totalHypotheses() }}</div>
+        <div class="brutal-card stat-card" style="background: var(--lavender); border-color: black;">
+          <div style="font-size: 0.7rem; font-weight: 900; letter-spacing: 1px; color: rgba(0,0,0,0.6);">ACTIVE HYPOTHESES</div>
+          <div style="font-size: 2.8rem; font-weight: 900; line-height: 1;">{{ totalHypotheses() }}</div>
         </div>
       </div>
 
@@ -153,6 +153,7 @@ export class CaseListComponent {
   totalEvidence = () => this.caseSummaries().reduce((sum: number, c) => sum + c.evidenceCount, 0);
   totalConnections = () => this.caseSummaries().reduce((sum: number, c) => sum + c.connectionCount, 0);
   totalHypotheses = () => this.caseSummaries().reduce((sum: number, c) => sum + c.hypothesisCount, 0);
+  activeCases = () => this.caseSummaries().filter(c => c.status === 'open').length;
 
   getSeverityColor = getSeverityColor;
 

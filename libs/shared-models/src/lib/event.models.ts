@@ -8,6 +8,7 @@ export type UserRole = 'viewer' | 'investigator' | 'supervisor';
 export type CaseStatus = 'open' | 'closed';
 export type EvidenceType = 'file' | 'text' | 'url';
 export type EvidenceVisibility = 'normal' | 'restricted';
+export type EvidenceTrustLevel = 'unverified' | 'verified' | 'disputed' | 'disproven';
 export type ConnectionType = 'supports' | 'contradicts' | 'related_to' | 'timeline' | 'causality' | 'metadata';
 export type HypothesisStatus = 'active' | 'disproven' | 'proven' | 'archived';
 export type ConnectionStrength = 1 | 2 | 3; // Weak, Medium, Strong
@@ -29,7 +30,8 @@ export type EventType =
     | 'HYPOTHESIS_UPDATED'
     | 'HYPOTHESIS_RESOLVED'
     | 'VISUAL_LAYOUT_UPDATED'
-    | 'INVESTIGATION_PATH_CREATED';
+    | 'INVESTIGATION_PATH_CREATED'
+    | 'EVIDENCE_TRUST_CHANGED';
 
 // ===== BASE EVENT =====
 export interface BaseEvent {
@@ -185,6 +187,15 @@ export interface InvestigationPathCreatedPayload {
     summary: string;
 }
 
+export interface EvidenceTrustChangedPayload {
+    evidenceId: string;
+    caseId: string;
+    oldTrustLevel: EvidenceTrustLevel;
+    newTrustLevel: EvidenceTrustLevel;
+    changedBy: string;
+    reason: string;
+}
+
 // ===== SPECIFIC EVENTS =====
 
 export interface CaseCreatedEvent extends BaseEvent {
@@ -264,6 +275,11 @@ export interface InvestigationPathCreatedEvent extends BaseEvent {
     payload: InvestigationPathCreatedPayload;
 }
 
+export interface EvidenceTrustChangedEvent extends BaseEvent {
+    type: 'EVIDENCE_TRUST_CHANGED';
+    payload: EvidenceTrustChangedPayload;
+}
+
 // ===== UNION TYPE =====
 export type AppEvent =
     | CaseCreatedEvent
@@ -281,7 +297,8 @@ export type AppEvent =
     | HypothesisUpdatedEvent
     | HypothesisResolvedEvent
     | VisualLayoutUpdatedEvent
-    | InvestigationPathCreatedEvent;
+    | InvestigationPathCreatedEvent
+    | EvidenceTrustChangedEvent;
 
 // ===== TYPE GUARDS =====
 export function isCaseCreatedEvent(event: AppEvent): event is CaseCreatedEvent {

@@ -4,7 +4,7 @@
  */
 
 import {
-    UserRole, EvidenceType, EvidenceVisibility, CaseStatus,
+    UserRole, EvidenceType, EvidenceVisibility, EvidenceTrustLevel, CaseStatus,
     ConnectionType, ConnectionStrength, HypothesisStatus
 } from './event.models';
 
@@ -32,6 +32,7 @@ export interface Evidence {
     readonly visibility: EvidenceVisibility;
     readonly version: number;
     readonly tags: string[];
+    readonly trustLevel: EvidenceTrustLevel;
 
     // For corrections
     readonly corrections?: Array<{

@@ -1,0 +1,64 @@
+<div class="modal-backdrop" (click)="onCancel()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+        <!-- Header -->
+        <div class="modal-header">
+            <h3>🔗 Why does this connect?</h3>
+            <div class="link-preview">
+                <span class="node-label">{{ sourceLabel }}</span>
+                <span class="link-arrow">→</span>
+                <span class="node-label">{{ targetLabel }}</span>
+            </div>
+        </div>
+
+        <!-- Connection Type -->
+        <div class="modal-section">
+            <label class="section-label">Connection Type</label>
+            <div class="type-grid">
+                <button *ngFor="let ct of connectionTypes" class="brutal-btn type-btn"
+                    [class.active]="connectionType() === ct.value" (click)="connectionType.set(ct.value)">
+                    {{ ct.icon }} {{ ct.label }}
+                </button>
+            </div>
+        </div>
+
+        <!-- Strength -->
+        <div class="modal-section">
+            <label class="section-label">Strength</label>
+            <div class="strength-row">
+                <button *ngFor="let sl of strengthLevels" class="brutal-btn strength-btn"
+                    [class.active]="strength() === sl.value" (click)="strength.set(sl.value)">
+                    {{ sl.label }}
+                </button>
+            </div>
+        </div>
+
+        <!-- Suggested Tokens -->
+        <div *ngIf="suggestedTokens.length > 0" class="modal-section">
+            <label class="section-label">Shared Keywords Found</label>
+            <div class="token-chips">
+                <button *ngFor="let token of suggestedTokens" class="token-chip" (click)="useSuggestedToken(token)"
+                    title="Click to add to reason">
+                    {{ token }}
+                </button>
+            </div>
+        </div>
+
+        <!-- Reason -->
+        <div class="modal-section">
+            <label class="section-label">Reasoning <span class="required">*</span></label>
+            <textarea class="reason-input" placeholder="Why do these pieces connect? (min 5 chars)" [ngModel]="reason()"
+                (ngModelChange)="reason.set($event)" rows="3"></textarea>
+            <span *ngIf="reason().length > 0 && reason().length < 5" class="hint-text">
+                {{ 5 - reason().length }} more characters needed
+            </span>
+        </div>
+
+        <!-- Actions -->
+        <div class="modal-actions">
+            <button class="brutal-btn cancel-btn" (click)="onCancel()">Cancel</button>
+            <button class="brutal-btn confirm-btn" [disabled]="!isValid" (click)="onConfirm()">
+                Confirm Link
+            </button>
+        </div>
+    </div>
+</div>

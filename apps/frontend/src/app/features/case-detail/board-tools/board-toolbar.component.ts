@@ -21,6 +21,7 @@ export class BoardToolbarComponent {
     nodes = this.boardStore.nodes;
     connections = this.boardStore.connections;
     selectedNode = this.boardStore.selectedNode;
+    suggestedConnectionCount = this.boardStore.suggestedConnectionCount;
 
     // Permissions
     canSave = () => this.caseStore.currentCase()?.permissions?.canUpdateLayout || false;
@@ -86,5 +87,9 @@ export class BoardToolbarComponent {
 
     autoArrange(): void {
         this.boardStore.autoArrange();
+    }
+
+    scanForLinks(): void {
+        this.boardStore.runDiscovery();
     }
 }

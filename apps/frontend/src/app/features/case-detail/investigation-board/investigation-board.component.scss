@@ -1,9 +1,10 @@
-/* Investigation Board — Neo-Brutalist */
+/* Investigation Board — Neo-Brutalist + Mind Palace */
 
 :host {
   display: block;
   width: 100%;
   height: 100%;
+  position: relative;
 }
 
 .board-container {
@@ -16,12 +17,12 @@
   background-size: 30px 30px;
 }
 
-/* Nodes */
+/* ===== NODES ===== */
 .board-node {
   position: absolute;
   cursor: move;
   touch-action: none;
-  transition: box-shadow 0.2s, border-width 0.2s;
+  transition: box-shadow 0.2s, border-width 0.2s, opacity 0.3s;
   background: white;
   border: var(--border-width, 3.5px) solid black;
   box-shadow: 4px 4px 0px black;
@@ -75,57 +76,158 @@
 }
 
 .node-body {
+  display: none;
   padding: 10px;
   font-size: 0.75rem;
   color: black;
 }
 
-/* Polaroid Preview on evidence hover */
+.board-node.selected .node-body {
+  // Option: show some metadata on selection? 
+  // User said "hover around or click then description will be there".
+  // My Polaroid handles this. Keeping body hidden to stay clean.
+  display: none;
+}
+
+/* ===== TRUST BADGES ===== */
+.trust-badge {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  font-size: 0.85rem;
+  z-index: 25;
+  line-height: 1;
+  filter: drop-shadow(1px 1px 0 black);
+}
+
+/* Trust-level visual effects on evidence nodes */
+.board-node.evidence.trust-verified {
+  border-color: #16A34A;
+  box-shadow: 4px 4px 0px #16A34A;
+}
+
+.board-node.evidence.trust-disputed {
+  border-color: #DC2626;
+  box-shadow: 4px 4px 0px #DC2626;
+  animation: pulse-warning 2s ease-in-out infinite;
+}
+
+.board-node.evidence.trust-disproven {
+  border-color: #666;
+  box-shadow: 2px 2px 0px #666;
+  opacity: 0.55;
+  filter: grayscale(60%);
+}
+
+@keyframes pulse-warning {
+
+  0%,
+  100% {
+    box-shadow: 4px 4px 0px #DC2626;
+  }
+
+  50% {
+    box-shadow: 4px 4px 12px rgba(220, 38, 38, 0.5);
+  }
+}
+
+/* ===== POLAROID PREVIEW ===== */
 .polaroid-preview {
   display: none;
   position: absolute;
-  top: -140px;
+  top: calc(100% + 15px);
   left: 50%;
-  transform: translateX(-50%) rotate(-3deg);
+  transform: translateX(-50%) rotate(-2deg);
   background: white;
   padding: 10px 10px 30px 10px;
   border: 3px solid black;
   box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.5);
   z-index: 100;
-  width: 140px;
+  width: 180px;
+  min-height: 220px;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.polaroid-title {
+  font-weight: 900;
+  font-size: 0.8rem;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+}
+
+.polaroid-desc {
+  font-size: 0.65rem;
+  line-height: 1.2;
+  color: #444;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  -webkit-box-orient: vertical;
 }
 
 .polaroid-img {
   width: 100%;
-  height: 90px;
-  background: #333;
-  margin-bottom: 5px;
+  height: 100px;
+  background: #222;
+  margin-bottom: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 2rem;
+  font-size: 2.5rem;
+  flex-shrink: 0;
 }
 
-.board-node.evidence:hover .polaroid-preview {
-  display: block;
+.board-node.evidence:hover .polaroid-preview,
+.board-node.evidence.selected .polaroid-preview {
+  display: flex;
   animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.hypothesis-preview {
+  display: none;
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) rotate(2deg);
+  width: 180px;
+  background: #fff9c4;
+  /* Pale yellow */
+  padding: 15px;
+  border: 2px solid #fbc02d;
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.2);
+  z-index: 100;
+}
+
+.sticky-note-content {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.75rem;
+  color: #5d4037;
+  line-height: 1.3;
+}
+
+.board-node.hypothesis:hover .hypothesis-preview,
+.board-node.hypothesis.selected .hypothesis-preview {
+  display: block;
+  animation: popIn 0.2s ease-out;
 }
 
 @keyframes popIn {
   from {
-    transform: translateX(-50%) scale(0.5);
+    transform: translateX(-50%) scale(0.9) translateY(-10px);
     opacity: 0;
   }
 
   to {
-    transform: translateX(-50%) scale(1) rotate(-3deg);
+    transform: translateX(-50%) scale(1) rotate(-2deg);
     opacity: 1;
   }
 }
 
-/* SVG connections layer */
+/* ===== CONNECTIONS (YARN) ===== */
 .connections-layer {
   position: absolute;
   top: 0;
@@ -141,13 +243,69 @@
   stroke-width: 3;
 }
 
+.connection-path {
+  transition: stroke 0.3s, opacity 0.3s, stroke-dasharray 0.3s;
+  filter: url(#yarn-filter);
+}
+
+.connection-path.inactive {
+  opacity: 0.4;
+}
+
+.connection-path.deletable {
+  cursor: pointer;
+
+  &:hover {
+    stroke: var(--pink, #FF6B9D) !important;
+    stroke-width: 5 !important;
+  }
+}
+
+/* Trust ripple on connections */
+.connection-path.yarn-disputed {
+  stroke: #F59E0B !important;
+  stroke-dasharray: 8, 4;
+  animation: yarn-pulse 1.5s ease-in-out infinite;
+}
+
+.connection-path.yarn-disproven {
+  stroke: #6B7280 !important;
+  stroke-dasharray: 4, 8;
+  opacity: 0.35;
+}
+
+@keyframes yarn-pulse {
+
+  0%,
+  100% {
+    opacity: 0.8;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* Connection labels */
+.connection-label {
+  fill: rgba(255, 255, 255, 0.7);
+  font-size: 0.65rem;
+  font-weight: bold;
+  pointer-events: none;
+}
+
+.trust-warning-icon {
+  pointer-events: none;
+}
+
+/* Conflict connections */
 .connections-layer .connection-conflict {
   stroke: var(--pink, #FF6B9D);
   stroke-width: 4;
   stroke-dasharray: 8, 4;
 }
 
-/* Side panel */
+/* ===== SIDE PANEL ===== */
 .side-panel {
   position: absolute;
   right: -320px;
@@ -166,7 +324,7 @@
   right: 0;
 }
 
-/* Empty Board State */
+/* ===== EMPTY STATE ===== */
 .board-empty-state {
   position: absolute;
   top: 50%;
@@ -178,7 +336,7 @@
   font-size: 0.9rem;
 }
 
-/* Responsive */
+/* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
   .side-panel {
     width: 100%;
@@ -199,5 +357,13 @@
 
   .board-node.hypothesis {
     transform: none;
+  }
+
+  .board-node.evidence.trust-disputed {
+    animation: none;
+  }
+
+  .connection-path.yarn-disputed {
+    animation: none;
   }
 }

@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { CaseStore } from '../../core/state/case-store.service';
 import { BoardStore } from '../../core/state/board-store.service';
-import { UserRole } from '@casbook/shared-models';
 import { InvestigationBoardComponent } from './investigation-board/investigation-board.component';
 import { BoardToolbarComponent } from './board-tools/board-toolbar.component';
 import { EvidenceUploadComponent } from './evidence-upload/evidence-upload.component';
@@ -145,34 +144,40 @@ import { getSeverityColor } from '../../shared/utils/contrast.util';
             </div>
 
             <div class="timeline">
-              <div class="timeline-item" *ngFor="let entry of timeline()">
-                <div class="timeline-icon">
-                  {{ getEventIcon(entry.type) }}
-                </div>
-                <div class="brutal-card" style="margin-bottom: 0;"
-                     [style.background]="getEventCardColor(entry.type)">
-                  <!-- Chain of Custody Sticker -->
-                  <span class="sticker" *ngIf="entry.actorId">
-                    {{ entry.actorId | uppercase | slice:0:3 }} &bull; {{ formatTimestamp(entry.occurredAt) }}
-                  </span>
+              @for (entry of timeline(); track entry.id) {
+                <div class="timeline-item">
+                  <div class="timeline-icon">
+                    {{ getEventIcon(entry.type) }}
+                  </div>
+                  <div class="brutal-card" style="margin-bottom: 0;"
+                       [style.background]="getEventCardColor(entry.type)">
+                    <!-- Chain of Custody Sticker -->
+                    @if (entry.actorId) {
+                      <span class="sticker">
+                        {{ entry.actorId | uppercase | slice:0:3 }} &bull; {{ formatTimestamp(entry.occurredAt) }}
+                      </span>
+                    }
 
-                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                    <span class="badge" style="background: white; color: black;">{{ entry.type }}</span>
-                    <span class="mono" style="font-size: 0.7rem;">{{ entry.occurredAt }}</span>
-                  </div>
-                  <h4 [style.color]="entry.type === 'NOTE_ADDED' ? 'white' : 'black'">
-                    {{ entry.title || entry.type }}
-                  </h4>
-                  <p *ngIf="entry.description"
-                     [style.color]="entry.type === 'NOTE_ADDED' ? 'rgba(255,255,255,0.9)' : 'black'">
-                    {{ entry.description }}
-                  </p>
-                  <div style="margin-top: 10px; font-size: 0.8rem; font-weight: bold;"
-                       *ngIf="entry.actorId">
-                    👤 {{ entry.actorId }}
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                      <span class="badge" style="background: white; color: black;">{{ entry.type }}</span>
+                      <span class="mono" style="font-size: 0.7rem;">{{ entry.occurredAt }}</span>
+                    </div>
+                    <h4 [style.color]="entry.type === 'NOTE_ADDED' ? 'white' : 'black'">
+                      {{ entry.title || entry.type }}
+                    </h4>
+                    @if (entry.description) {
+                      <p [style.color]="entry.type === 'NOTE_ADDED' ? 'rgba(255,255,255,0.9)' : 'black'">
+                        {{ entry.description }}
+                      </p>
+                    }
+                    @if (entry.actorId) {
+                      <div style="margin-top: 10px; font-size: 0.8rem; font-weight: bold;">
+                        👤 {{ entry.actorId }}
+                      </div>
+                    }
                   </div>
                 </div>
-              </div>
+              }
             </div>
 
             <div *ngIf="timeline().length === 0" class="brutal-card" style="text-align: center; padding: 30px;">

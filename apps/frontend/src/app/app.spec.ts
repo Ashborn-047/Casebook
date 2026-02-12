@@ -2,12 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { signal } from '@angular/core';
 import { App } from './app';
-<<<<<<< HEAD
-import { provideRouter } from '@angular/router';
-=======
 import { CaseStore } from './core/state/case-store.service';
 import { EventSyncService } from './core/sync/event-sync.service';
->>>>>>> origin/pr/3
 
 describe('App', () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -31,8 +27,11 @@ describe('App', () => {
 
     await TestBed.configureTestingModule({
       imports: [App],
-<<<<<<< HEAD
-      providers: [provideRouter([])]
+      providers: [
+        provideRouter([]),
+        { provide: CaseStore, useValue: mockCaseStore },
+        { provide: EventSyncService, useValue: mockEventSyncService }
+      ]
     }).compileComponents();
   });
 
@@ -40,13 +39,6 @@ describe('App', () => {
     const fixture = TestBed.createComponent(App);
     const app = fixture.componentInstance;
     expect(app).toBeTruthy();
-=======
-      providers: [
-        provideRouter([]),
-        { provide: CaseStore, useValue: mockCaseStore },
-        { provide: EventSyncService, useValue: mockEventSyncService }
-      ]
-    }).compileComponents();
   });
 
   it('should render logo text', async () => {
@@ -57,6 +49,5 @@ describe('App', () => {
     expect(compiled.querySelector('.logo')?.textContent).toContain(
       'CASEBOOK',
     );
->>>>>>> origin/pr/3
   });
 });

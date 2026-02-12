@@ -43,112 +43,123 @@ import { getSeverityColor } from '../../../shared/utils/contrast.util';
         </div>
       </div>
 
-      <!-- Loading -->
-      <div *ngIf="store.uiState().isLoading" class="brutal-card" style="text-align: center; padding: 40px;">
-        Loading cases...
-      </div>
+      @if (store.uiState().isLoading) {
+        <!-- Loading -->
+        <div class="brutal-card" style="text-align: center; padding: 40px;">
+          Loading cases...
+        </div>
+      }
 
-      <!-- Case Grid -->
-      <div *ngIf="!store.uiState().isLoading && caseSummaries().length > 0" class="case-grid">
-        <div
-          *ngFor="let caseItem of caseSummaries()"
-          class="brutal-card case-card"
-        >
-          <div class="case-meta">
-            <span class="badge" style="background: var(--lime)">{{ caseItem.status | uppercase }}</span>
-            <span class="badge" [style.background]="getSeverityColor(caseItem.severity)">
-              {{ caseItem.severity | uppercase }}
-            </span>
-          </div>
-          <h3>{{ caseItem.title }}</h3>
-          <p style="margin-bottom: 20px;">{{ caseItem.description }}</p>
-          <div style="margin-top: auto; display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: bold;">
-            <span>📎 {{ caseItem.evidenceCount }} Items</span>
-            <span>📅 {{ formatDate(caseItem.createdAt) }}</span>
-          </div>
-          <div style="display: flex; gap: 8px; margin-top: 15px; font-size: 0.75rem; font-weight: bold;">
-            <span>🔗 {{ caseItem.connectionCount }} links</span>
-            <span>💡 {{ caseItem.hypothesisCount }} hypotheses</span>
-          </div>
+      @if (!store.uiState().isLoading && caseSummaries().length > 0) {
+        <!-- Case Grid -->
+        <div class="case-grid">
+          @for (caseItem of caseSummaries(); track caseItem.id) {
+            <div class="brutal-card case-card">
+              <div class="case-meta">
+                <span class="badge" style="background: var(--lime)">{{ caseItem.status | uppercase }}</span>
+                <span class="badge" [style.background]="getSeverityColor(caseItem.severity)">
+                  {{ caseItem.severity | uppercase }}
+                </span>
+              </div>
+              <h3>{{ caseItem.title }}</h3>
+              <p style="margin-bottom: 20px;">{{ caseItem.description }}</p>
+              <div style="margin-top: auto; display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: bold;">
+                <span>📎 {{ caseItem.evidenceCount }} Items</span>
+                <span>📅 {{ formatDate(caseItem.createdAt) }}</span>
+              </div>
+              <div style="display: flex; gap: 8px; margin-top: 15px; font-size: 0.75rem; font-weight: bold;">
+                <span>🔗 {{ caseItem.connectionCount }} links</span>
+                <span>💡 {{ caseItem.hypothesisCount }} hypotheses</span>
+              </div>
+              <button
+                class="brutal-btn"
+                style="margin-top: 20px; background: var(--blue); color: white;"
+                (click)="selectCase(caseItem.id)"
+              >View Case ⚡</button>
+            </div>
+          }
+
+          <!-- Create New Case -->
+          <button
+            class="brutal-card"
+            style="border-style: dashed; display: flex; align-items: center; justify-content: center; background: #f0f0f0; cursor: pointer; min-height: 200px; width: 100%;"
+            (click)="showCreateModal.set(true)"
+          >
+            <div style="text-align: center;">
+              <div style="font-size: 3rem;">➕</div>
+              <div style="font-weight: 900; margin-top: 10px;">CREATE NEW CASE</div>
+            </div>
+          </button>
+        </div>
+      }
+
+      @if (!store.uiState().isLoading && caseSummaries().length === 0) {
+        <!-- Empty State -->
+        <div class="brutal-card" style="text-align: center; padding: 60px 40px;">
+          <div style="font-size: 4rem; margin-bottom: 20px;">📂</div>
+          <h2 style="font-size: 2rem;">No Cases Yet</h2>
+          <p style="margin-top: 10px; font-weight: bold; opacity: 0.7;">Your investigation dashboard is empty.</p>
           <button
             class="brutal-btn"
-            style="margin-top: 20px; background: var(--blue); color: white;"
-            (click)="selectCase(caseItem.id)"
-          >View Case ⚡</button>
+            style="margin-top: 30px; background: var(--lime); font-size: 1.1rem; padding: 15px 30px;"
+            (click)="showCreateModal.set(true)"
+          >
+            Start New Case ⚡
+          </button>
         </div>
-
-        <!-- Create New Case -->
-        <div
-          class="brutal-card"
-          style="border-style: dashed; display: flex; align-items: center; justify-content: center; background: #f0f0f0; cursor: pointer; min-height: 200px;"
-          (click)="showCreateModal.set(true)"
-        >
-          <div style="text-align: center;">
-            <div style="font-size: 3rem;">➕</div>
-            <div style="font-weight: 900; margin-top: 10px;">CREATE NEW CASE</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Empty State -->
-      <div *ngIf="!store.uiState().isLoading && caseSummaries().length === 0" class="brutal-card" style="text-align: center; padding: 60px 40px;">
-        <div style="font-size: 4rem; margin-bottom: 20px;">📂</div>
-        <h2 style="font-size: 2rem;">No Cases Yet</h2>
-        <p style="margin-top: 10px; font-weight: bold; opacity: 0.7;">Your investigation dashboard is empty.</p>
-        <button
-          class="brutal-btn"
-          style="margin-top: 30px; background: var(--lime); font-size: 1.1rem; padding: 15px 30px;"
-          (click)="showCreateModal.set(true)"
-        >
-          Start New Case ⚡
-        </button>
-      </div>
+      }
     </div>
 
     <!-- Create Case Modal -->
-    <div *ngIf="showCreateModal()" class="modal-overlay" (click)="closeModal($event)">
-      <div class="brutal-card" style="width: 500px; max-width: 90vw; padding: 30px;" (click)="$event.stopPropagation()">
-        <h2 style="margin: 0 0 20px 0; border-bottom: 3px solid black; padding-bottom: 10px;">🆕 New Case</h2>
+    @if (showCreateModal()) {
+      <div class="modal-overlay" (click)="closeModal($event)" (keydown.escape)="showCreateModal.set(false)" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="brutal-card" style="width: 500px; max-width: 90vw; padding: 30px;" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" role="document" tabindex="-1">
+          <h2 id="modalTitle" style="margin: 0 0 20px 0; border-bottom: 3px solid black; padding-bottom: 10px;">🆕 New Case</h2>
 
-        <div class="form-group">
-          <label for="caseTitle">Case Title *</label>
-          <input id="caseTitle" type="text" [ngModel]="newTitle()" (ngModelChange)="newTitle.set($event)"
-                 placeholder="e.g., Unauthorized Network Access">
-        </div>
+          <div class="form-group">
+            <label for="caseTitle">Case Title *</label>
+            <input id="caseTitle" type="text" [ngModel]="newTitle()" (ngModelChange)="newTitle.set($event)"
+                   placeholder="e.g., Unauthorized Network Access">
+          </div>
 
-        <div class="form-group">
-          <label for="caseDesc">Description *</label>
-          <textarea id="caseDesc" [ngModel]="newDesc()" (ngModelChange)="newDesc.set($event)"
-                    placeholder="Describe the investigation..." rows="3"></textarea>
-        </div>
+          <div class="form-group">
+            <label for="caseDesc">Description *</label>
+            <textarea id="caseDesc" [ngModel]="newDesc()" (ngModelChange)="newDesc.set($event)"
+                      placeholder="Describe the investigation..." rows="3"></textarea>
+          </div>
 
-        <div class="form-group">
-          <span id="severityLabel" style="display: block; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem;">Severity</span>
-          <div role="group" aria-labelledby="severityLabel" style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <button *ngFor="let s of severities" class="brutal-btn"
-                    [style.background]="newSeverity() === s ? getSeverityColor(s) : '#eee'"
-                    [style.fontWeight]="newSeverity() === s ? '900' : '400'"
-                    [attr.aria-pressed]="newSeverity() === s"
-                    (click)="newSeverity.set(s)">
-              {{ s | uppercase }}
+          <div class="form-group">
+            <span id="severityLabel" style="display: block; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem;">Severity</span>
+            <div role="group" aria-labelledby="severityLabel" style="display: flex; gap: 8px; flex-wrap: wrap;">
+              @for (s of severities; track s) {
+                <button class="brutal-btn"
+                        [style.background]="newSeverity() === s ? getSeverityColor(s) : '#eee'"
+                        [style.fontWeight]="newSeverity() === s ? '900' : '400'"
+                        [attr.aria-pressed]="newSeverity() === s"
+                        (click)="newSeverity.set(s)">
+                  {{ s | uppercase }}
+                </button>
+              }
+            </div>
+          </div>
+
+          @if (createError()) {
+            <div style="color: red; font-weight: bold; margin: 10px 0;">
+              {{ createError() }}
+            </div>
+          }
+
+          <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="brutal-btn" style="flex: 1;" (click)="showCreateModal.set(false)">Cancel</button>
+            <button class="brutal-btn" style="flex: 2; background: var(--lime);"
+                    [disabled]="!canCreate() || isCreating()"
+                    (click)="createNewCase()">
+              {{ isCreating() ? 'Creating...' : 'Create Case ⚡' }}
             </button>
           </div>
         </div>
-
-        <div *ngIf="createError()" style="color: red; font-weight: bold; margin: 10px 0;">
-          {{ createError() }}
-        </div>
-
-        <div style="display: flex; gap: 10px; margin-top: 20px;">
-          <button class="brutal-btn" style="flex: 1;" (click)="showCreateModal.set(false)">Cancel</button>
-          <button class="brutal-btn" style="flex: 2; background: var(--lime);"
-                  [disabled]="!canCreate() || isCreating()"
-                  (click)="createNewCase()">
-            {{ isCreating() ? 'Creating...' : 'Create Case ⚡' }}
-          </button>
-        </div>
       </div>
-    </div>
+    }
   `
 })
 export class CaseListComponent {

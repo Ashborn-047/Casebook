@@ -27,238 +27,262 @@ import { getSeverityColor } from '../../shared/utils/contrast.util';
   template: `
     <div class="case-detail-host" [class.board-view]="viewMode() === 'board'">
       <!-- Case Meta Bar (Integrated Header) -->
-      <div class="case-meta-bar" *ngIf="currentCase()">
-        <div class="meta-left">
-          <button class="back-btn brutal-btn" (click)="goBack()" title="Back to Cases" aria-label="Back to Cases">←</button>
-          <div class="case-title-stack">
-            <span class="case-id">#{{ currentCase()?.id?.slice(-6)?.toUpperCase() }}</span>
-            <h1 class="case-title">{{ caseTitle }}</h1>
+      @if (currentCase()) {
+        <div class="case-meta-bar">
+          <div class="meta-left">
+            <button class="back-btn brutal-btn" (click)='goBack()' title="Back to Cases" aria-label="Back to Cases">←</button>
+            <div class="case-title-stack">
+              <span class="case-id">#{{ currentCase()?.id?.slice(-6)?.toUpperCase() }}</span>
+              <h1 class="case-title">{{ caseTitle }}</h1>
+            </div>
           </div>
-        </div>
 
-        <div class="meta-center">
-          <div class="segmented-control">
-            <button [class.active]="viewMode() === 'timeline'" (click)="setViewMode('timeline')">
-              📋 TIMELINE
+          <div class="meta-center">
+            <div class="segmented-control">
+              <button [class.active]="viewMode() === 'timeline'" (click)="setViewMode('timeline')">
+                📋 TIMELINE
+              </button>
+              <button [class.active]="viewMode() === 'board'" (click)="setViewMode('board')">
+                🧠 MIND PALACE
+              </button>
+            </div>
+          </div>
+
+          <div class="meta-right">
+            <button class="brutal-btn tool-btn"
+              [class.active]="showTimeTravel()"
+              (click)="showTimeTravel.set(!showTimeTravel())"
+              title="Toggle Time Travel"
+              aria-label="Toggle Time Travel">
+              ⏳
             </button>
-            <button [class.active]="viewMode() === 'board'" (click)="setViewMode('board')">
-              🧠 MIND PALACE
+            <button class="brutal-btn tool-btn upload-trigger"
+              (click)="showUpload.set(true)"
+              title="Upload Evidence"
+              aria-label="Upload Evidence">
+              📎
             </button>
+            <div class="export-tray">
+              <button (click)="exportJson()">JSON</button>
+              <button (click)="exportPdf()">PDF</button>
+            </div>
           </div>
         </div>
-        
-        <div class="meta-right">
-          <button class="brutal-btn tool-btn" 
-            [class.active]="showTimeTravel()"
-            (click)="showTimeTravel.set(!showTimeTravel())"
-            title="Toggle Time Travel"
-            aria-label="Toggle Time Travel">
-            ⏳
-          </button>
-          <button class="brutal-btn tool-btn upload-trigger"
-            (click)="showUpload.set(true)"
-            title="Upload Evidence"
-            aria-label="Upload Evidence">
-            📎
-          </button>
-          <div class="export-tray">
-            <button (click)="exportJson()">JSON</button>
-            <button (click)="exportPdf()">PDF</button>
-          </div>
-        </div>
-      </div>
+      }
 
       <!-- Time Travel Debugger -->
-      <div *ngIf="showTimeTravel()" style="margin-bottom: 20px; flex-shrink: 0;">
-        <cb-time-travel-debugger></cb-time-travel-debugger>
-      </div>
+      @if (showTimeTravel()) {
+        <div style="margin-bottom: 20px; flex-shrink: 0;">
+          <cb-time-travel-debugger></cb-time-travel-debugger>
+        </div>
+      }
 
       <!-- Loading -->
-      <div *ngIf="store.uiState().isLoading" class="brutal-card" style="text-align: center; padding: 40px;">
-        Loading case details...
-      </div>
+      @if (store.uiState().isLoading) {
+        <div class="brutal-card" style="text-align: center; padding: 40px;">
+          Loading case details...
+        </div>
+      }
 
       <!-- Case Not Found -->
-      <div *ngIf="!store.uiState().isLoading && !currentCase()" class="brutal-card" style="text-align: center; padding: 40px;">
-        <div style="font-size: 4rem; margin-bottom: 10px;">🔍</div>
-        <h2>Case Not Found</h2>
-        <p style="margin-top: 10px;">The requested case could not be found.</p>
-      </div>
+      @if (!store.uiState().isLoading && !currentCase()) {
+        <div class="brutal-card" style="text-align: center; padding: 40px;">
+          <div style="font-size: 4rem; margin-bottom: 10px;">🔍</div>
+          <h2>Case Not Found</h2>
+          <p style="margin-top: 10px;">The requested case could not be found.</p>
+        </div>
+      }
 
       <!-- Main Content -->
-      <div *ngIf="!store.uiState().isLoading && currentCase()" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+      @if (!store.uiState().isLoading && currentCase()) {
+        <div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
 
-        <!-- ==================== TIMELINE VIEW ==================== -->
-        <div *ngIf="viewMode() === 'timeline'" class="case-detail-layout">
-          <!-- Sidebar -->
-          <aside>
-            <div class="brutal-card" style="background: var(--lavender)">
-              <h2 style="margin-bottom: 10px;">Case Info</h2>
-              <div class="form-group">
-                <label>Title</label>
-                <p style="font-weight: bold;">{{ caseTitle }}</p>
-              </div>
-              <div class="form-group">
-                <label>Severity</label>
-                <span class="badge" [style.background]="getSeverityColor(currentCase()?.severity || 'low')">
-                  {{ currentCase()?.severity | uppercase }}
-                </span>
-              </div>
-              <div class="form-group">
-                <label>Status</label>
-                <p>{{ currentCase()?.status | uppercase }} ({{ daysOpen }} Days Open)</p>
-              </div>
-              <div class="form-group">
-                <label>Description</label>
-                <p style="font-size: 0.85rem;">{{ caseDescription }}</p>
-              </div>
-              <hr style="border: 1px solid black; margin: 15px 0;">
-
-              <!-- Case Stats -->
-              <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem;">
-                <div style="display: flex; justify-content: space-between;">
-                  <span>📎 Evidence</span>
-                  <strong>{{ evidenceCount }}</strong>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span>🔗 Connections</span>
-                  <strong>{{ connectionCount }}</strong>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span>💡 Hypotheses</span>
-                  <strong>{{ activeHypothesisCount }}</strong>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span>📝 Notes</span>
-                  <strong>{{ noteCount }}</strong>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span>🧭 Paths</span>
-                  <strong>{{ pathsCount }}</strong>
-                </div>
-              </div>
-
-              <hr style="border: 1px solid black; margin: 15px 0;">
-            </div>
-          </aside>
-
-          <!-- Timeline -->
-          <main class="active-work-area">
-            <div class="timeline-header">
-              <h2>📅 Timeline View</h2>
-            </div>
-
-            <div class="timeline">
-              <div class="timeline-item" *ngFor="let entry of timeline()">
-                <div class="timeline-icon">
-                  {{ getEventIcon(entry.type) }}
-                </div>
-                <div class="brutal-card" style="margin-bottom: 0;"
-                     [style.background]="getEventCardColor(entry.type)">
-                  <!-- Chain of Custody Sticker -->
-                  <span class="sticker" *ngIf="entry.actorId">
-                    {{ entry.actorId | uppercase | slice:0:3 }} &bull; {{ formatTimestamp(entry.occurredAt) }}
-                  </span>
-
-                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                    <span class="badge" style="background: white; color: black;">{{ entry.type }}</span>
-                    <span class="mono" style="font-size: 0.7rem;">{{ entry.occurredAt }}</span>
+          <!-- ==================== TIMELINE VIEW ==================== -->
+          @if (viewMode() === 'timeline') {
+            <div class="case-detail-layout">
+              <!-- Sidebar -->
+              <aside>
+                <div class="brutal-card" style="background: var(--lavender)">
+                  <h2 style="margin-bottom: 10px;">Case Info</h2>
+                  <div class="form-group">
+                    <span class="label-text">Title</span>
+                    <p style="font-weight: bold;">{{ caseTitle }}</p>
                   </div>
-                  <h4 [style.color]="entry.type === 'NOTE_ADDED' ? 'white' : 'black'">
-                    {{ entry.title || entry.type }}
-                  </h4>
-                  <p *ngIf="entry.description"
-                     [style.color]="entry.type === 'NOTE_ADDED' ? 'rgba(255,255,255,0.9)' : 'black'">
-                    {{ entry.description }}
-                  </p>
-                  <div style="margin-top: 10px; font-size: 0.8rem; font-weight: bold;"
-                       *ngIf="entry.actorId">
-                    👤 {{ entry.actorId }}
+                  <div class="form-group">
+                    <span class="label-text">Severity</span>
+                    <span class="badge" [style.background]="getSeverityColor(currentCase()?.severity || 'low')">
+                      {{ currentCase()?.severity | uppercase }}
+                    </span>
                   </div>
+                  <div class="form-group">
+                    <span class="label-text">Status</span>
+                    <p>{{ currentCase()?.status | uppercase }} ({{ daysOpen }} Days Open)</p>
+                  </div>
+                  <div class="form-group">
+                    <span class="label-text">Description</span>
+                    <p style="font-size: 0.85rem;">{{ caseDescription }}</p>
+                  </div>
+                  <hr style="border: 1px solid black; margin: 15px 0;">
+
+                  <!-- Case Stats -->
+                  <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem;">
+                    <div style="display: flex; justify-content: space-between;">
+                      <span>📎 Evidence</span>
+                      <strong>{{ evidenceCount }}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                      <span>🔗 Connections</span>
+                      <strong>{{ connectionCount }}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                      <span>💡 Hypotheses</span>
+                      <strong>{{ activeHypothesisCount }}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                      <span>📝 Notes</span>
+                      <strong>{{ noteCount }}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                      <span>🧭 Paths</span>
+                      <strong>{{ pathsCount }}</strong>
+                    </div>
+                  </div>
+
+                  <hr style="border: 1px solid black; margin: 15px 0;">
                 </div>
+              </aside>
+
+              <!-- Timeline -->
+              <main class="active-work-area">
+                <div class="timeline-header">
+                  <h2>📅 Timeline View</h2>
+                </div>
+
+                <div class="timeline">
+                  @for (entry of timeline(); track $index) {
+                    <div class="timeline-item">
+                      <div class="timeline-icon">
+                        {{ getEventIcon(entry.type) }}
+                      </div>
+                      <div class="brutal-card" style="margin-bottom: 0;"
+                           [style.background]="getEventCardColor(entry.type)">
+                        <!-- Chain of Custody Sticker -->
+                        @if (entry.actorId) {
+                          <span class="sticker">
+                            {{ entry.actorId | uppercase | slice:0:3 }} &bull; {{ formatTimestamp(entry.occurredAt) }}
+                          </span>
+                        }
+
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                          <span class="badge" style="background: white; color: black;">{{ entry.type }}</span>
+                          <span class="mono" style="font-size: 0.7rem;">{{ entry.occurredAt }}</span>
+                        </div>
+                        <h4 [style.color]="entry.type === 'NOTE_ADDED' ? 'white' : 'black'">
+                          {{ entry.title || entry.type }}
+                        </h4>
+                        @if (entry.description) {
+                          <p [style.color]="entry.type === 'NOTE_ADDED' ? 'rgba(255,255,255,0.9)' : 'black'">
+                            {{ entry.description }}
+                          </p>
+                        }
+                        @if (entry.actorId) {
+                          <div style="margin-top: 10px; font-size: 0.8rem; font-weight: bold;">
+                            👤 {{ entry.actorId }}
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+
+                @if (timeline().length === 0) {
+                  <div class="brutal-card" style="text-align: center; padding: 30px;">
+                    <p>No timeline events yet.</p>
+                  </div>
+                }
+              </main>
+            </div>
+          }
+
+          <!-- ==================== BOARD VIEW ==================== -->
+          @if (viewMode() === 'board') {
+            <div class="board-view-container">
+            <div class="board-layout">
+              <div class="canvas-container">
+                <!-- Floating Toolbar -->
+                <div class="floating-toolbar">
+                  <cb-board-toolbar></cb-board-toolbar>
+                </div>
+
+                <cb-investigation-board></cb-investigation-board>
               </div>
             </div>
 
-            <div *ngIf="timeline().length === 0" class="brutal-card" style="text-align: center; padding: 30px;">
-              <p>No timeline events yet.</p>
+            <div class="board-status-bar">
+              <div class="status-group">
+                <span class="stat-tag">NODES: {{ nodesCount() }}</span>
+                <span class="stat-tag">LINKS: {{ connectionsCount() }}</span>
+                <span class="stat-tag mode-tag">{{ boardMode() | uppercase }} MODE</span>
+              </div>
+
+              <div class="status-group central-group">
+                <span>Grid: {{ isGridVisible() ? 'On' : 'Off' }}</span>
+                <span class="divider">|</span>
+                <span>Zoom: {{ boardZoom() }}%</span>
+                <span class="divider">|</span>
+                <span>Size: {{ gridSize() }}px</span>
+                <button class="mini-help-btn" (click)="showBoardInstructions()" aria-label="Show Board Instructions">?</button>
+              </div>
+
+              <div class="status-group hotkeys">
+                <kbd class="kbd">Space</kbd> pan &bull;
+                <kbd class="kbd">Esc</kbd> deselect
+              </div>
             </div>
-          </main>
+
+            <!-- Instructions Overlay -->
+            @if (showInstructions()) {
+              <div class="instructions-overlay" (click)="dismissBoardInstructions()" (keydown.escape)="dismissBoardInstructions()" tabindex="0" role="button" aria-label="Close instructions">
+                <div class="brutal-card instructions-card" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Board Instructions">
+                  <h3 style="margin-bottom: 15px;">🧠 Board — Quick Guide</h3>
+                  <div class="instructions-content">
+                    <div class="instruction-item">
+                      <span class="instruction-icon">🖱️</span>
+                      <div><strong>Select</strong><p>Click to select, drag to move</p></div>
+                    </div>
+                    <div class="instruction-item">
+                      <span class="instruction-icon">🔗</span>
+                      <div><strong>Connect</strong><p>Click source → click target</p></div>
+                    </div>
+                    <div class="instruction-item">
+                      <span class="instruction-icon">👆</span>
+                      <div><strong>Pan</strong><p>Drag to pan, or hold Space</p></div>
+                    </div>
+                    <div class="instruction-item">
+                      <span class="instruction-icon">🔍</span>
+                      <div><strong>Zoom</strong><p>Mouse wheel</p></div>
+                    </div>
+                    <div class="instruction-item">
+                      <span class="instruction-icon">⌨️</span>
+                      <div><strong>Shortcuts</strong><p>Ctrl+Z Undo | Ctrl+Y Redo | Esc Deselect</p></div>
+                    </div>
+                  </div>
+                  <button class="brutal-btn" style="width: 100%; background: var(--lime);" (click)="dismissBoardInstructions()">Got it! 💪</button>
+                </div>
+              </div>
+            }
+          }
         </div>
-
-        <!-- ==================== BOARD VIEW ==================== -->
-        <div *ngIf="viewMode() === 'board'" class="board-view-container">
-          <div class="board-layout">
-            <div class="canvas-container">
-              <!-- Floating Toolbar -->
-              <div class="floating-toolbar">
-                <cb-board-toolbar></cb-board-toolbar>
-              </div>
-
-              <cb-investigation-board></cb-investigation-board>
-            </div>
-          </div>
-
-          <div class="board-status-bar">
-            <div class="status-group">
-              <span class="stat-tag">NODES: {{ nodesCount() }}</span>
-              <span class="stat-tag">LINKS: {{ connectionsCount() }}</span>
-              <span class="stat-tag mode-tag">{{ boardMode() | uppercase }} MODE</span>
-            </div>
-
-            <div class="status-group central-group">
-              <span>Grid: {{ isGridVisible() ? 'On' : 'Off' }}</span>
-              <span class="divider">|</span>
-              <span>Zoom: {{ boardZoom() }}%</span>
-              <span class="divider">|</span>
-              <span>Size: {{ gridSize() }}px</span>
-              <button class="mini-help-btn" (click)="showBoardInstructions()" aria-label="Show Board Instructions">?</button>
-            </div>
-
-            <div class="status-group hotkeys">
-              <kbd class="kbd">Space</kbd> pan &bull;
-              <kbd class="kbd">Esc</kbd> deselect
-            </div>
-          </div>
-
-          <!-- Instructions Overlay -->
-          <div *ngIf="showInstructions()" class="instructions-overlay" (click)="dismissBoardInstructions()">
-            <div class="brutal-card instructions-card" (click)="$event.stopPropagation()">
-              <h3 style="margin-bottom: 15px;">🧠 Board — Quick Guide</h3>
-              <div class="instructions-content">
-                <div class="instruction-item">
-                  <span class="instruction-icon">🖱️</span>
-                  <div><strong>Select</strong><p>Click to select, drag to move</p></div>
-                </div>
-                <div class="instruction-item">
-                  <span class="instruction-icon">🔗</span>
-                  <div><strong>Connect</strong><p>Click source → click target</p></div>
-                </div>
-                <div class="instruction-item">
-                  <span class="instruction-icon">👆</span>
-                  <div><strong>Pan</strong><p>Drag to pan, or hold Space</p></div>
-                </div>
-                <div class="instruction-item">
-                  <span class="instruction-icon">🔍</span>
-                  <div><strong>Zoom</strong><p>Mouse wheel</p></div>
-                </div>
-                <div class="instruction-item">
-                  <span class="instruction-icon">⌨️</span>
-                  <div><strong>Shortcuts</strong><p>Ctrl+Z Undo | Ctrl+Y Redo | Esc Deselect</p></div>
-                </div>
-              </div>
-              <button class="brutal-btn" style="width: 100%; background: var(--lime);" (click)="dismissBoardInstructions()">Got it! 💪</button>
-            </div>
-          </div>
-        </div>
-      </div>
+      }
 
       <!-- Evidence Upload Overlay -->
-      <cb-evidence-upload
-        *ngIf="showUpload()"
-        [caseId]="currentCase()?.id || ''"
-        (completed)="showUpload.set(false)"
-        (cancelled)="showUpload.set(false)"
-      ></cb-evidence-upload>
+      @if (showUpload()) {
+        <cb-evidence-upload
+          [caseId]="currentCase()?.id || ''"
+          (completed)="showUpload.set(false)"
+          (cancelled)="showUpload.set(false)"
+        ></cb-evidence-upload>
+      }
     </div>
   `,
   styles: [`
@@ -604,6 +628,14 @@ import { getSeverityColor } from '../../shared/utils/contrast.util';
       margin: 0;
       color: #666;
       font-size: 0.85rem;
+    }
+
+    .label-text {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      font-size: 0.8rem;
     }
 
     @media (max-width: 900px) {

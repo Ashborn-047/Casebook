@@ -13,6 +13,6 @@
     </div>
 </header>
 
-<router-outlet></router-outlet>
+<router-outlet />
 
-<cb-command-palette [isOpen]="cmdPaletteOpen()" (closed)="cmdPaletteOpen.set(false)"></cb-command-palette>
+<cb-command-palette [isOpen]="cmdPaletteOpen()" (closed)="cmdPaletteOpen.set(false)" />

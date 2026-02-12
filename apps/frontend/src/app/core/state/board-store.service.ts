@@ -6,7 +6,6 @@ import {
     BoardNode,
     BoardConnection,
     INITIAL_BOARD_STATE,
-    createBoardNode,
     createBoardConnection,
     calculateConnectionPath,
     CaseState,
@@ -167,7 +166,7 @@ export class BoardStore {
         targetNodeId: string,
         type: ConnectionType = 'related_to',
         strength: ConnectionStrength = 2,
-        reason: string = ''
+        reason = ''
     ): void {
         this.saveToHistory();
 
@@ -507,7 +506,7 @@ export class BoardStore {
     }
 
     /** Find node at position */
-    findNodeAtPosition(x: number, y: number, tolerance: number = 10): BoardNode | null {
+    findNodeAtPosition(x: number, y: number, tolerance = 10): BoardNode | null {
         const state = this.boardState();
 
         for (const node of state.nodes) {

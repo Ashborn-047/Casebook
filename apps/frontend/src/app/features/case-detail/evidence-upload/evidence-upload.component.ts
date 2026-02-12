@@ -1,5 +1,5 @@
 import { Component, inject, signal, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { CaseStore } from '../../../core/state/case-store.service';
 import { HashService } from '@casbook/shared-utils';
@@ -12,9 +12,9 @@ import { HashService } from '@casbook/shared-utils';
  * This ensures the SHA-256 fingerprint is part of the immutable event payload.
  */
 @Component({
-    selector: 'cb-evidence-upload',
+    selector: 'app-evidence-upload',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [FormsModule],
     templateUrl: './evidence-upload.component.html',
     styleUrls: ['./evidence-upload.component.scss']
 })

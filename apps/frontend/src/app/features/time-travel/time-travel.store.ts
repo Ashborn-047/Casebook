@@ -111,7 +111,7 @@ export class TimeTravelStore {
         this.pause();
     }
 
-    play(intervalMs: number = 1000): void {
+    play(intervalMs = 1000): void {
         if (this.isPlaying()) return;
 
         if (this.isAtEnd()) {

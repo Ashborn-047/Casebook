@@ -19,7 +19,7 @@ import { ConnectionModalComponent, ConnectionFormData } from './connection-modal
 import { YarnInspectorComponent } from './yarn-inspector/yarn-inspector.component';
 
 @Component({
-    selector: 'cb-investigation-board',
+    selector: 'app-investigation-board',
     standalone: true,
     imports: [CommonModule, PathCreatorComponent, ConnectionModalComponent, YarnInspectorComponent],
     templateUrl: './investigation-board.component.html',

@@ -8,9 +8,9 @@ import {
     ViewChild,
     ElementRef,
     AfterViewInit,
-    computed,
+    computed, OnChanges,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router } from '@angular/router';
 import { CaseStore } from '../../core/state/case-store.service';
 
@@ -22,15 +22,18 @@ interface CommandItem {
 }
 
 @Component({
-    selector: 'cb-command-palette',
+    selector: 'app-command-palette',
     standalone: true,
-    imports: [CommonModule],
+    imports: [],
     template: `
     <div
       class="cmd-palette-overlay"
       [class.active]="isOpen"
       (click)="onOverlayClick($event)"
-    >
+      role="button"
+      tabindex="0"
+      (keydown.escape)="close()"
+      >
       <div class="cmd-palette-box">
         <input
           #searchInput
@@ -43,31 +46,38 @@ interface CommandItem {
           (keydown.arrowdown)="moveSelection(1)"
           (keydown.arrowup)="moveSelection(-1)"
           (keydown.enter)="executeSelected()"
-        />
+          />
         <div class="cmd-results">
-          <div
-            *ngFor="let item of filteredItems(); let i = index"
-            class="cmd-item"
-            [style.background]="selectedIndex() === i ? 'var(--lime)' : ''"
-            (click)="executeItem(item)"
-            (mouseenter)="selectedIndex.set(i)"
-          >
-            <span>{{ item.icon }} {{ item.label }}</span>
-            <span *ngIf="item.shortcut" class="cmd-shortcut">{{ item.shortcut }}</span>
-          </div>
-          <div
-            *ngIf="filteredItems().length === 0"
-            class="cmd-item"
-            style="color: #999; cursor: default;"
-          >
-            No results found
-          </div>
+          @for (item of filteredItems(); track item; let i = $index) {
+            <div
+              class="cmd-item"
+              role="button"
+              tabindex="0"
+              [style.background]="selectedIndex() === i ? 'var(--lime)' : ''"
+              (click)="executeItem(item)"
+              (keydown.enter)="executeItem(item)"
+              (mouseenter)="selectedIndex.set(i)"
+              >
+              <span>{{ item.icon }} {{ item.label }}</span>
+              @if (item.shortcut) {
+                <span class="cmd-shortcut">{{ item.shortcut }}</span>
+              }
+            </div>
+          }
+          @if (filteredItems().length === 0) {
+            <div
+              class="cmd-item"
+              style="color: #999; cursor: default;"
+              >
+              No results found
+            </div>
+          }
         </div>
       </div>
     </div>
-  `,
+    `,
 })
-export class CommandPaletteComponent implements AfterViewInit {
+export class CommandPaletteComponent implements AfterViewInit, OnChanges {
     @Input() isOpen = false;
     @Output() closed = new EventEmitter<void>();
     @ViewChild('searchInput') searchInput!: ElementRef<HTMLInputElement>;

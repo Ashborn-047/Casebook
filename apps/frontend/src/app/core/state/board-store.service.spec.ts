@@ -6,12 +6,14 @@ import { signal } from '@angular/core';
 describe('BoardStore', () => {
     let boardStore: BoardStore;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let mockCaseStore: any;
 
     beforeEach(() => {
         mockCaseStore = {
             currentCase: signal(null),
             currentUser: signal({ id: 'test-user', name: 'Test User', role: 'investigator' }),
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
             addEvent: async () => { } // Simple mock
         };
 

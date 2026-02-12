@@ -4,7 +4,7 @@ import { BoardStore } from '../../../core/state/board-store.service';
 import { CaseStore } from '../../../core/state/case-store.service';
 
 @Component({
-    selector: 'cb-board-toolbar',
+    selector: 'app-board-toolbar',
     standalone: true,
     imports: [CommonModule, TitleCasePipe],
     templateUrl: './board-toolbar.component.html',

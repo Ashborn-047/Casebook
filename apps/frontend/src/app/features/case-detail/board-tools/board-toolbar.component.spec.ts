@@ -21,18 +21,30 @@ describe('BoardToolbarComponent', () => {
             selectedNode: signal(null),
             canUndo: signal(false),
             canRedo: signal(false),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             setMode: (mode: any) => boardMode.set(mode),
-            zoom: (delta: number) => { },
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
+            zoom: (_delta: number) => { },
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
             resetViewport: () => { },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             updateTools: (newTools: any) => toolsSignal.update(t => ({ ...t, ...newTools })),
             toggleGrid: () => toolsSignal.update(t => ({ ...t, isGridVisible: !t.isGridVisible })),
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
             toggleSnapToGrid: () => { },
-            updateGridSize: (event: any) => { },
-            updateConnectionStyle: (event: any) => { },
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any, @typescript-eslint/no-empty-function
+            updateGridSize: (_event: any) => { },
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any, @typescript-eslint/no-empty-function
+            updateConnectionStyle: (_event: any) => { },
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
             toggleLabels: () => { },
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
             saveLayout: () => { },
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
             undo: () => { },
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
             redo: () => { },
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
             autoArrange: () => { },
             canSave: () => true
         };

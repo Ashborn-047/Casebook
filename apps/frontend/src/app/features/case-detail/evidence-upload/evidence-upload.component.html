@@ -1,89 +1,107 @@
-<div class="modal-overlay active" (click)="cancel()">
-    <div class="brutal-card modal-content" (click)="$event.stopPropagation()">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2 style="margin: 0;">📎 Upload Evidence</h2>
-            <button (click)="cancel()"
-                style="border:none; background:none; cursor:pointer; font-size: 1.5rem;">✕</button>
-        </div>
-
-        <!-- Type Selector -->
-        <div class="form-group">
-            <label>Evidence Type</label>
-            <div style="display: flex; gap: 5px;">
-                <button class="brutal-btn" style="flex: 1; padding: 8px;"
-                    [style.background]="type() === 'text' ? 'var(--lime)' : 'white'"
-                    (click)="type.set('text')">TXT</button>
-                <button class="brutal-btn" style="flex: 1; padding: 8px;"
-                    [style.background]="type() === 'file' ? 'var(--lime)' : 'white'"
-                    (click)="type.set('file')">FILE</button>
-                <button class="brutal-btn" style="flex: 1; padding: 8px;"
-                    [style.background]="type() === 'url' ? 'var(--lime)' : 'white'"
-                    (click)="type.set('url')">URL</button>
-            </div>
-        </div>
-
-        <!-- Content Input -->
-        <div [ngSwitch]="type()">
-            <div *ngSwitchCase="'text'" class="form-group">
-                <label>Content</label>
-                <textarea rows="4" [ngModel]="content()" (ngModelChange)="content.set($event)"
-                    placeholder="Enter evidence textual content..."></textarea>
-            </div>
-
-            <div *ngSwitchCase="'file'">
-                <div class="drop-zone">
-                    <input type="file" (change)="onFileSelected($event)" id="fileInput" style="display: none;">
-                    <label for="fileInput" style="cursor: pointer; display: block;">
-                        <p style="font-weight: 900;">
-                            {{ selectedFile() ? selectedFile()?.name : 'DRAG & DROP FILES HERE' }}
-                        </p>
-                        <p style="font-size: 0.8rem; margin-top: 10px;">or click to browse</p>
-                    </label>
-                </div>
-            </div>
-
-            <div *ngSwitchCase="'url'" class="form-group">
-                <label>Source URL</label>
-                <input type="url" [ngModel]="content()" (ngModelChange)="content.set($event)" placeholder="https://...">
-            </div>
-        </div>
-
-        <!-- Description -->
-        <div class="form-group">
-            <label>Description</label>
-            <textarea rows="3" [ngModel]="description()" (ngModelChange)="description.set($event)"
-                placeholder="What does this evidence represent?"></textarea>
-        </div>
-
-        <!-- Tags -->
-        <div class="form-group">
-            <label>Tags (comma separated)</label>
-            <input type="text" [ngModel]="tagsString()" (ngModelChange)="tagsString.set($event)"
-                placeholder="e.g. server-log, access, j_doe">
-        </div>
-
-        <!-- Access Level -->
-        <div class="form-group" style="display: flex; gap: 10px; align-items: center;">
-            <input type="checkbox" style="width: 20px; height: 20px;" [checked]="visibility() === 'restricted'"
-                (change)="visibility.set(visibility() === 'restricted' ? 'normal' : 'restricted')">
-            <label style="margin-bottom: 0;">Mark as Restricted Access</label>
-        </div>
-
-        <!-- Hash Display -->
-        <div *ngIf="computedHash() || isHashing()" class="form-group">
-            <label>Integrity Hash</label>
-            <div class="hash-box mono">
-                {{ isHashing() ? '⏳ Calculating SHA-256...' : ('SHA256: ' + computedHash()) }}
-            </div>
-        </div>
-
-        <!-- Actions -->
-        <div style="display: flex; gap: 10px; margin-top: 15px;">
-            <button class="brutal-btn" style="flex: 1;" (click)="cancel()">Cancel</button>
-            <button class="brutal-btn" style="flex: 2; background: var(--lime);"
-                [disabled]="isHashing() || isSubmitting() || !content() || !description()" (click)="submit()">
-                {{ isSubmitting() ? 'Securing...' : 'Submit Evidence ⚡' }}
-            </button>
-        </div>
+<div class="modal-overlay active" role="button" tabindex="0" (click)="cancel()" (keydown.escape)="cancel()">
+  <div class="brutal-card modal-content" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" role="dialog" aria-modal="true">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <h2 style="margin: 0;">📎 Upload Evidence</h2>
+      <button (click)="cancel()"
+      style="border:none; background:none; cursor:pointer; font-size: 1.5rem;">✕</button>
     </div>
+
+    <!-- Type Selector -->
+    <div class="form-group">
+      <span class="brutal-label">Evidence Type</span>
+      <div style="display: flex; gap: 5px;">
+        <button class="brutal-btn" style="flex: 1; padding: 8px;"
+          [style.background]="type() === 'text' ? 'var(--lime)' : 'white'"
+        (click)="type.set('text')">TXT</button>
+        <button class="brutal-btn" style="flex: 1; padding: 8px;"
+          [style.background]="type() === 'file' ? 'var(--lime)' : 'white'"
+        (click)="type.set('file')">FILE</button>
+        <button class="brutal-btn" style="flex: 1; padding: 8px;"
+          [style.background]="type() === 'url' ? 'var(--lime)' : 'white'"
+        (click)="type.set('url')">URL</button>
+      </div>
+    </div>
+
+    <!-- Content Input -->
+    <div>
+      @switch (type()) {
+        @case ('text') {
+          <div class="form-group">
+            <label>
+              <span class="brutal-label">Content</span>
+              <textarea rows="4" [ngModel]="content()" (ngModelChange)="content.set($event)"
+              placeholder="Enter evidence textual content..."></textarea>
+            </label>
+          </div>
+        }
+        @case ('file') {
+          <div>
+            <div class="drop-zone">
+              <input type="file" (change)="onFileSelected($event)" id="fileInput" style="display: none;">
+              <label for="fileInput" style="cursor: pointer; display: block;">
+                <p style="font-weight: 900;">
+                  {{ selectedFile() ? selectedFile()?.name : 'DRAG & DROP FILES HERE' }}
+                </p>
+                <p style="font-size: 0.8rem; margin-top: 10px;">or click to browse</p>
+              </label>
+            </div>
+          </div>
+        }
+        @case ('url') {
+          <div class="form-group">
+            <label>
+              <span class="brutal-label">Source URL</span>
+              <input type="url" [ngModel]="content()" (ngModelChange)="content.set($event)" placeholder="https://...">
+            </label>
+          </div>
+        }
+      }
+    </div>
+
+    <!-- Description -->
+    <div class="form-group">
+      <label>
+        <span class="brutal-label">Description</span>
+        <textarea rows="3" [ngModel]="description()" (ngModelChange)="description.set($event)"
+        placeholder="What does this evidence represent?"></textarea>
+      </label>
+    </div>
+
+    <!-- Tags -->
+    <div class="form-group">
+      <label>
+        <span class="brutal-label">Tags (comma separated)</span>
+        <input type="text" [ngModel]="tagsString()" (ngModelChange)="tagsString.set($event)"
+          placeholder="e.g. server-log, access, j_doe">
+      </label>
+    </div>
+
+    <!-- Access Level -->
+    <div class="form-group" style="display: flex; gap: 10px; align-items: center;">
+      <label style="margin-bottom: 0; display: flex; align-items: center; gap: 10px;">
+        <input type="checkbox" style="width: 20px; height: 20px;" [checked]="visibility() === 'restricted'"
+          (change)="visibility.set(visibility() === 'restricted' ? 'normal' : 'restricted')">
+        <span>Mark as Restricted Access</span>
+      </label>
+    </div>
+
+    <!-- Hash Display -->
+    @if (computedHash() || isHashing()) {
+      <div class="form-group">
+        <span class="brutal-label">Integrity Hash</span>
+        <div class="hash-box mono">
+          {{ isHashing() ? '⏳ Calculating SHA-256...' : ('SHA256: ' + computedHash()) }}
+        </div>
+      </div>
+    }
+
+    <!-- Actions -->
+    <div style="display: flex; gap: 10px; margin-top: 15px;">
+      <button class="brutal-btn" style="flex: 1;" (click)="cancel()">Cancel</button>
+      <button class="brutal-btn" style="flex: 2; background: var(--lime);"
+        [disabled]="isHashing() || isSubmitting() || !content() || !description()" (click)="submit()">
+        {{ isSubmitting() ? 'Securing...' : 'Submit Evidence ⚡' }}
+      </button>
+    </div>
+  </div>
 </div>

@@ -111,7 +111,7 @@ export class CaseStore {
         const effectiveRole = this.uiState().roleOverride || this.currentUser().role;
 
         return caseEvents
-            .map(event => this.eventToTimelineEntry(event, effectiveRole))
+            .map(event => this.eventToTimelineEntry(event))
             .filter(entry => entry.isVisibleTo.includes(effectiveRole));
     });
 
@@ -380,7 +380,7 @@ export class CaseStore {
         };
     }
 
-    private eventToTimelineEntry(event: AppEvent, _currentRole: UserRole): TimelineEntry {
+    private eventToTimelineEntry(event: AppEvent): TimelineEntry {
         const baseEntry = {
             id: event.id, // Use event.id for stable tracking in UI
             eventId: event.id,

@@ -2,24 +2,21 @@ import {
     Component,
     inject,
     signal,
-    computed,
-    input,
-    output,
-    OnInit
+    computed
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CaseStore } from '../../../../core/state/case-store.service';
-import { Evidence, InvestigationPath } from '@casbook/shared-models';
+import { Evidence } from '@casbook/shared-models';
 
 @Component({
-    selector: 'cb-path-creator',
+    selector: 'app-path-creator',
     standalone: true,
     imports: [CommonModule, FormsModule],
     templateUrl: './path-creator.component.html',
     styleUrls: ['./path-creator.component.scss'],
 })
-export class PathCreatorComponent implements OnInit {
+export class PathCreatorComponent {
     private caseStore = inject(CaseStore);
 
     /** Whether the panel is open */
@@ -72,8 +69,6 @@ export class PathCreatorComponent implements OnInit {
     expandedPathId = signal<string | null>(null);
 
     isSaving = signal(false);
-
-    ngOnInit(): void { }
 
     // === PUBLIC API ===
 

@@ -6,7 +6,9 @@ import { CaseStore } from './core/state/case-store.service';
 import { EventSyncService } from './core/sync/event-sync.service';
 
 describe('App', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockCaseStore: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockEventSyncService: any;
 
   beforeEach(async () => {

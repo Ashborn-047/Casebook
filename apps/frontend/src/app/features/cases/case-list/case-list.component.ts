@@ -49,7 +49,7 @@ import { getSeverityColor } from '../../../shared/utils/contrast.util';
       </div>
 
       <!-- Case Grid -->
-      <div *ngIf="!store.uiState().isLoading" class="case-grid">
+      <div *ngIf="!store.uiState().isLoading && caseSummaries().length > 0" class="case-grid">
         <div
           *ngFor="let caseItem of caseSummaries()"
           class="brutal-card case-card"
@@ -91,10 +91,17 @@ import { getSeverityColor } from '../../../shared/utils/contrast.util';
       </div>
 
       <!-- Empty State -->
-      <div *ngIf="!store.uiState().isLoading && caseSummaries().length === 0" class="brutal-card" style="text-align: center; padding: 40px;">
-        <div style="font-size: 4rem; margin-bottom: 10px;">📂</div>
-        <h2>No Cases Yet</h2>
-        <p style="margin-top: 10px;">Create your first investigation case to get started.</p>
+      <div *ngIf="!store.uiState().isLoading && caseSummaries().length === 0" class="brutal-card" style="text-align: center; padding: 60px 40px;">
+        <div style="font-size: 4rem; margin-bottom: 20px;">📂</div>
+        <h2 style="font-size: 2rem;">No Cases Yet</h2>
+        <p style="margin-top: 10px; font-weight: bold; opacity: 0.7;">Your investigation dashboard is empty.</p>
+        <button
+          class="brutal-btn"
+          style="margin-top: 30px; background: var(--lime); font-size: 1.1rem; padding: 15px 30px;"
+          (click)="showCreateModal.set(true)"
+        >
+          Start New Case ⚡
+        </button>
       </div>
     </div>
 
@@ -104,23 +111,24 @@ import { getSeverityColor } from '../../../shared/utils/contrast.util';
         <h2 style="margin: 0 0 20px 0; border-bottom: 3px solid black; padding-bottom: 10px;">🆕 New Case</h2>
 
         <div class="form-group">
-          <label>Case Title *</label>
-          <input type="text" [ngModel]="newTitle()" (ngModelChange)="newTitle.set($event)"
+          <label for="caseTitle">Case Title *</label>
+          <input id="caseTitle" type="text" [ngModel]="newTitle()" (ngModelChange)="newTitle.set($event)"
                  placeholder="e.g., Unauthorized Network Access">
         </div>
 
         <div class="form-group">
-          <label>Description *</label>
-          <textarea [ngModel]="newDesc()" (ngModelChange)="newDesc.set($event)"
+          <label for="caseDesc">Description *</label>
+          <textarea id="caseDesc" [ngModel]="newDesc()" (ngModelChange)="newDesc.set($event)"
                     placeholder="Describe the investigation..." rows="3"></textarea>
         </div>
 
         <div class="form-group">
-          <label>Severity</label>
-          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <span id="severityLabel" style="display: block; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem;">Severity</span>
+          <div role="group" aria-labelledby="severityLabel" style="display: flex; gap: 8px; flex-wrap: wrap;">
             <button *ngFor="let s of severities" class="brutal-btn"
                     [style.background]="newSeverity() === s ? getSeverityColor(s) : '#eee'"
                     [style.fontWeight]="newSeverity() === s ? '900' : '400'"
+                    [attr.aria-pressed]="newSeverity() === s"
                     (click)="newSeverity.set(s)">
               {{ s | uppercase }}
             </button>

@@ -29,7 +29,7 @@ import { getSeverityColor } from '../../shared/utils/contrast.util';
       <!-- Case Meta Bar (Integrated Header) -->
       <div class="case-meta-bar" *ngIf="currentCase()">
         <div class="meta-left">
-          <button class="back-btn brutal-btn" (click)="goBack()" title="Back to Cases">←</button>
+          <button class="back-btn brutal-btn" (click)="goBack()" title="Back to Cases" aria-label="Back to Cases">←</button>
           <div class="case-title-stack">
             <span class="case-id">#{{ currentCase()?.id?.slice(-6)?.toUpperCase() }}</span>
             <h1 class="case-title">{{ caseTitle }}</h1>
@@ -51,10 +51,14 @@ import { getSeverityColor } from '../../shared/utils/contrast.util';
           <button class="brutal-btn tool-btn" 
             [class.active]="showTimeTravel()"
             (click)="showTimeTravel.set(!showTimeTravel())"
-            title="Toggle Time Travel">
+            title="Toggle Time Travel"
+            aria-label="Toggle Time Travel">
             ⏳
           </button>
-          <button class="brutal-btn tool-btn upload-trigger" (click)="showUpload.set(true)" title="Upload Evidence">
+          <button class="brutal-btn tool-btn upload-trigger"
+            (click)="showUpload.set(true)"
+            title="Upload Evidence"
+            aria-label="Upload Evidence">
             📎
           </button>
           <div class="export-tray">
@@ -207,7 +211,7 @@ import { getSeverityColor } from '../../shared/utils/contrast.util';
               <span>Zoom: {{ boardZoom() }}%</span>
               <span class="divider">|</span>
               <span>Size: {{ gridSize() }}px</span>
-              <button class="mini-help-btn" (click)="showBoardInstructions()">?</button>
+              <button class="mini-help-btn" (click)="showBoardInstructions()" aria-label="Show Board Instructions">?</button>
             </div>
 
             <div class="status-group hotkeys">

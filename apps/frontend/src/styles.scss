@@ -429,6 +429,15 @@ select:focus {
   background: #fffbe6;
 }
 
+.brutal-btn:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[role="button"]:focus-visible {
+  outline: 4px dashed var(--pink);
+  outline-offset: 4px;
+}
+
 /* === MODAL === */
 .modal-overlay {
   position: fixed;

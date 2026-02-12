@@ -2,16 +2,13 @@
     <div class="nav-wrapper">
         <a class="logo" routerLink="/cases">🔍 CASEBOOK</a>
         <div class="header-controls">
-            <button class="brutal-btn" style="padding: 6px 12px; font-size: 0.8rem;" (click)="toggleFocusMode()"
-                [style.background]="focusMode() ? 'var(--pink)' : 'white'">
-                👁️ Focus
+            <button class="brutal-btn"
+                style="padding: 6px 12px; font-size: 0.8rem;"
+                (click)="toggleFocusMode()"
+                [style.background]="focusMode() ? 'var(--pink)' : 'white'"
+                [attr.aria-pressed]="focusMode()">
+                👁️ Focus Mode
             </button>
-            <div class="header-controls">
-                <button class="brutal-btn" style="padding: 6px 12px; font-size: 0.8rem;" (click)="toggleFocusMode()"
-                    [style.background]="focusMode() ? 'var(--pink)' : 'white'">
-                    👁️ Focus Mode
-                </button>
-            </div>
         </div>
     </div>
 </header>

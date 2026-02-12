@@ -37,6 +37,10 @@ export class App implements OnInit {
       event.preventDefault();
       this.cmdPaletteOpen.update(v => !v);
     }
+    if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key.toLowerCase() === 'f') {
+      event.preventDefault();
+      this.toggleFocusMode();
+    }
     if (event.key === 'Escape') {
       this.cmdPaletteOpen.set(false);
     }

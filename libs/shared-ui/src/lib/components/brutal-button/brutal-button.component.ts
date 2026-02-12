@@ -37,6 +37,11 @@ import { CommonModule } from '@angular/common';
       opacity: 0.5;
       cursor: not-allowed;
     }
+
+    .brutal-button:focus-visible {
+      outline: 4px dashed var(--pink, #FF6B9D);
+      outline-offset: 4px;
+    }
   `]
 })
 export class BrutalButtonComponent {

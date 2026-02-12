@@ -1,20 +1,45 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { signal } from '@angular/core';
 import { App } from './app';
-import { NxWelcome } from './nx-welcome';
+import { CaseStore } from './core/state/case-store.service';
+import { EventSyncService } from './core/sync/event-sync.service';
 
 describe('App', () => {
+  let mockCaseStore: any;
+  let mockEventSyncService: any;
+
   beforeEach(async () => {
+    mockCaseStore = {
+      uiState: signal({ isLoading: false, storageInfo: { isInitialized: true } }),
+      currentUser: signal({ name: 'Test User' }),
+      caseSummaries: signal([]),
+      selectCase: vi.fn()
+    };
+
+    mockEventSyncService = {
+      initialize: vi.fn(),
+      watchCase: vi.fn(),
+      unwatchCase: vi.fn()
+    };
+
     await TestBed.configureTestingModule({
-      imports: [App, NxWelcome],
+      imports: [App],
+      providers: [
+        provideRouter([]),
+        { provide: CaseStore, useValue: mockCaseStore },
+        { provide: EventSyncService, useValue: mockEventSyncService }
+      ]
     }).compileComponents();
   });
 
-  it('should render title', async () => {
+  it('should render logo text', async () => {
     const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain(
-      'Welcome frontend',
+    expect(compiled.querySelector('.logo')?.textContent).toContain(
+      'CASEBOOK',
     );
   });
 });

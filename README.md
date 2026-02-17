@@ -8,6 +8,23 @@ A modern, high-performance, event-sourced case management application for invest
 
 ---
 
+## 🛠️ Tech Stack
+
+<div align="center">
+
+![Engine](https://img.shields.io/badge/ENGINE-AUTONOMOUS-222222?style=for-the-badge&labelColor=444444)
+![Core](https://img.shields.io/badge/CORE-ANGULAR_21-DD0031?style=for-the-badge&labelColor=444444&logo=angular&logoColor=white)
+![Workspace](https://img.shields.io/badge/MONOREPO-NX_22-143055?style=for-the-badge&labelColor=444444&logo=nx&logoColor=white)
+![Logic](https://img.shields.io/badge/LOGIC-TYPESCRIPT_5.9-3178C6?style=for-the-badge&labelColor=444444&logo=typescript&logoColor=white)
+![Styling](https://img.shields.io/badge/STYLING-SCSS_NEO--BRUTAL-CC6699?style=for-the-badge&labelColor=444444&logo=sass&logoColor=white)
+![State](https://img.shields.io/badge/STATE-SIGNALS_+_RXJS-B7178C?style=for-the-badge&labelColor=444444&logo=reactivex&logoColor=white)
+![Backend](https://img.shields.io/badge/SYNC-CONVEX.DEV-24292e?style=for-the-badge&labelColor=444444&logo=convex&logoColor=white)
+![Testing](https://img.shields.io/badge/VERIFY-VITEST_+_PLAYWRIGHT-6E9F18?style=for-the-badge&labelColor=444444&logo=vitest&logoColor=white)
+
+</div>
+
+---
+
 ## 🎯 Who Is This For?
 
 Casebook is designed for:
@@ -148,23 +165,6 @@ Casebook is designed for:
 - Casebook works completely offline
 - All data stored locally in IndexedDB
 - Sync when online (if Convex is configured)
-
----
-
-## 🛠️ Tech Stack
-
-<div align="center">
-
-![Engine](https://img.shields.io/badge/ENGINE-AUTONOMOUS-222222?style=for-the-badge&labelColor=444444)
-![Core](https://img.shields.io/badge/CORE-ANGULAR_21-DD0031?style=for-the-badge&labelColor=444444&logo=angular&logoColor=white)
-![Workspace](https://img.shields.io/badge/MONOREPO-NX_22-143055?style=for-the-badge&labelColor=444444&logo=nx&logoColor=white)
-![Logic](https://img.shields.io/badge/LOGIC-TYPESCRIPT_5.9-3178C6?style=for-the-badge&labelColor=444444&logo=typescript&logoColor=white)
-![Styling](https://img.shields.io/badge/STYLING-SCSS_NEO--BRUTAL-CC6699?style=for-the-badge&labelColor=444444&logo=sass&logoColor=white)
-![State](https://img.shields.io/badge/STATE-SIGNALS_+_RXJS-B7178C?style=for-the-badge&labelColor=444444&logo=reactivex&logoColor=white)
-![Backend](https://img.shields.io/badge/SYNC-CONVEX.DEV-24292e?style=for-the-badge&labelColor=444444&logo=convex&logoColor=white)
-![Testing](https://img.shields.io/badge/VERIFY-VITEST_+_PLAYWRIGHT-6E9F18?style=for-the-badge&labelColor=444444&logo=vitest&logoColor=white)
-
-</div>
 
 ---
 

@@ -1,6 +1,6 @@
 <!-- Board Container -->
-<div #boardContainer class="board-container" (mousedown)="onBoardMouseDown($event)"
-  (mousemove)="onBoardMouseMove($event)" (mouseup)="onBoardMouseUp($event)" (wheel)="onBoardWheel($event)">
+<div #boardContainer class="board-container" [class.is-interacting]="isInteracting()"
+  (mousedown)="onBoardMouseDown($event)" (mousemove)="onBoardMouseMove($event)" (mouseup)="onBoardMouseUp($event)" (wheel)="onBoardWheel($event)">
   <!-- Grid Background -->
   @if (tools().isGridVisible) {
   <div class="board-grid" [style.background-size]="gridSize() + 'px ' + gridSize() + 'px'"
@@ -19,29 +19,29 @@
     </defs>
 
     <!-- Connection Paths -->
-    @for (connection of connections(); track connection) {
+    @for (connection of uiConnections(); track connection.id) {
     <g>
       <!-- Clickable hit area (wider, invisible) -->
-      <path [attr.d]="getConnectionPathD(connection)" stroke="transparent" stroke-width="12" fill="transparent"
+      <path [attr.d]="connection.ui.pathD" stroke="transparent" stroke-width="12" fill="transparent"
         style="pointer-events: stroke; cursor: pointer;" (click)="onYarnClick(connection.id, $event)" />
       <!-- Visible connection line -->
-      <path [attr.d]="getConnectionPathD(connection)" [attr.stroke]="connection.metadata.color"
+      <path [attr.d]="connection.ui.pathD" [attr.stroke]="connection.metadata.color"
         [attr.stroke-width]="connection.strength * 2" [attr.stroke-dasharray]="connection.metadata.lineStyle === 'dashed' ? '5,5' :
                                  connection.metadata.lineStyle === 'dotted' ? '1,5' : 'none'" fill="transparent"
         class="connection-path" [class.inactive]="!connection.metadata.isActive" [class.deletable]="mode() === 'delete'"
-        [class.yarn-disputed]="getConnectionTrustClass(connection) === 'yarn-disputed'"
-        [class.yarn-disproven]="getConnectionTrustClass(connection) === 'yarn-disproven'"
+        [class.yarn-disputed]="connection.ui.trustClass === 'yarn-disputed'"
+        [class.yarn-disproven]="connection.ui.trustClass === 'yarn-disproven'"
         style="pointer-events: none;" />
       <!-- Connection type indicator at midpoint -->
       @if (tools().showLabels && connection.metadata.label) {
-      <text [attr.x]="getConnectionMidpoint(connection).x" [attr.y]="getConnectionMidpoint(connection).y - 10"
+      <text [attr.x]="connection.ui.midpoint.x" [attr.y]="connection.ui.midpoint.y - 10"
         text-anchor="middle" class="connection-label">
         {{ connection.metadata.label }}
       </text>
       }
       <!-- Trust warning icon on disputed connections -->
-      @if (getConnectionTrustClass(connection) === 'yarn-disputed') {
-      <text [attr.x]="getConnectionMidpoint(connection).x" [attr.y]="getConnectionMidpoint(connection).y + 5"
+      @if (connection.ui.trustClass === 'yarn-disputed') {
+      <text [attr.x]="connection.ui.midpoint.x" [attr.y]="connection.ui.midpoint.y + 5"
         text-anchor="middle" class="trust-warning-icon" style="font-size: 14px; pointer-events: none;">
         ⚠️
       </text>
@@ -50,7 +50,7 @@
     }
 
     <!-- Temporary connection line (while drawing) -->
-    @if (isDrawingConnection && tempConnection()) {
+    @if (isDrawingConnection() && tempConnection()) {
     <path [attr.d]="getTempConnectionPathD()" stroke="#3B82F6" stroke-width="2" stroke-dasharray="5,5"
       fill="transparent" />
     }
@@ -60,25 +60,25 @@
   <div class="nodes-layer"
     [style.transform]="'translate(' + viewport().panX + 'px, ' + viewport().panY + 'px) scale(' + viewport().zoom + ')'">
     <!-- Evidence Nodes -->
-    @for (node of evidenceNodes(); track node) {
+    @for (node of evidenceNodes(); track node.id) {
     <div class="board-node evidence" [style.left.px]="node.position.x" [style.top.px]="node.position.y"
       [style.width.px]="node.size.width" [style.height.px]="node.size.height" [style.zIndex]="node.zIndex"
       [class.selected]="node.isSelected" [class.dragging]="node.isDragging" [class.mode-connect]="mode() === 'connect'"
-      [class.mode-delete]="mode() === 'delete'" [class.trust-disputed]="getEvidenceTrustLevel(node) === 'disputed'"
-      [class.trust-disproven]="getEvidenceTrustLevel(node) === 'disproven'"
-      [class.trust-verified]="getEvidenceTrustLevel(node) === 'verified'"
+      [class.mode-delete]="mode() === 'delete'" [class.trust-disputed]="node.ui.trustLevel === 'disputed'"
+      [class.trust-disproven]="node.ui.trustLevel === 'disproven'"
+      [class.trust-verified]="node.ui.trustLevel === 'verified'"
       (mousedown)="onNodeMouseDown(node.id, $event)">
       <!-- Trust Badge -->
-      <div class="trust-badge" [title]="getEvidenceTrustLevel(node)">
-        {{ getEvidenceTrustBadge(node) }}
+      <div class="trust-badge" [title]="node.ui.trustLevel">
+        {{ node.ui.trustBadge }}
       </div>
       <!-- Polaroid Preview -->
       <div class="polaroid-preview">
         <div class="polaroid-img">{{ node.metadata.icon }}</div>
-        <div class="polaroid-title">{{ getNodeTitle(node) }}</div>
-        <div class="polaroid-desc">{{ getNodeDescription(node) }}</div>
+        <div class="polaroid-title">{{ node.ui.title }}</div>
+        <div class="polaroid-desc">{{ node.ui.description }}</div>
       </div>
-      <div class="node-header">📎 {{ getNodeTitle(node) }}</div>
+      <div class="node-header">📎 {{ node.ui.title }}</div>
       <div class="node-body">
         @if (node.isSelected) {
         <div style="margin-top: 5px; font-size: 0.65rem; color: #999;">
@@ -90,27 +90,27 @@
     }
 
     <!-- Hypothesis Nodes -->
-    @for (node of hypothesisNodes(); track node) {
+    @for (node of hypothesisNodes(); track node.id) {
     <div class="board-node hypothesis" [style.left.px]="node.position.x" [style.top.px]="node.position.y"
       [style.width.px]="node.size.width" [style.height.px]="node.size.height" [style.zIndex]="node.zIndex + 10"
       [class.selected]="node.isSelected" [class.dragging]="node.isDragging"
-      [class.confidence-high]="getHypothesisConfidence(node) === 'high'"
-      [class.confidence-medium]="getHypothesisConfidence(node) === 'medium'"
-      [class.confidence-low]="getHypothesisConfidence(node) === 'low'" (mousedown)="onNodeMouseDown(node.id, $event)">
+      [class.confidence-high]="node.ui.confidence === 'high'"
+      [class.confidence-medium]="node.ui.confidence === 'medium'"
+      [class.confidence-low]="node.ui.confidence === 'low'" (mousedown)="onNodeMouseDown(node.id, $event)">
       <div class="node-header">
-        🧠 {{ getNodeTitle(node) }}
-        <span style="float: right; font-size: 0.7rem;">{{ getHypothesisConfidence(node) | uppercase }}</span>
+        🧠 {{ node.ui.title }}
+        <span style="float: right; font-size: 0.7rem;">{{ node.ui.confidence | uppercase }}</span>
       </div>
       <!-- Hypothesis Preview (Sticky Note Style) -->
       <div class="hypothesis-preview">
         <div class="sticky-note-content">
           <div style="font-weight: 900; border-bottom: 1px solid black; margin-bottom: 5px;">HYPOTHESIS</div>
-          {{ getNodeDescription(node) }}
+          {{ node.ui.description }}
         </div>
       </div>
       <div class="node-body">
         <div style="margin-top: 5px; font-weight: bold; font-size: 0.7rem;">
-          {{ getSupportingEvidenceCount(node) }} evidence linked
+          {{ node.ui.supportingCount }} evidence linked
         </div>
       </div>
     </div>

@@ -71,7 +71,7 @@ export function reduceEvents(events: AppEvent[]): CaseState {
 /**
  * Apply single event to state (immutable)
  */
-function applyEvent(state: CaseState, event: AppEvent): CaseState {
+export function applyEvent(state: CaseState, event: AppEvent): CaseState {
     switch (event.type) {
         case 'CASE_CREATED':
             return applyCaseCreated(state, event);

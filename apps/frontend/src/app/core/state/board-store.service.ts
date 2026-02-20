@@ -12,7 +12,9 @@ import {
     AppEvent,
     ConnectionType,
     ConnectionStrength,
-    EvidenceTrustLevel
+    EvidenceTrustLevel,
+    Evidence,
+    Hypothesis
 } from '@casbook/shared-models';
 import { createInitialBoardState } from '@casbook/shared-logic';
 
@@ -41,8 +43,101 @@ export class BoardStore {
     /** Nodes for the current case */
     readonly nodes = computed(() => this.boardState().nodes);
 
+    /** Optimized UI nodes with pre-computed display properties */
+    readonly uiNodes = computed(() => {
+        const nodes = this.nodes();
+        const caseState = this.currentCase();
+        if (!caseState) return [];
+
+        // Build lookup maps to avoid O(N*M) complexity in the loop
+        const evidenceMap = new Map(caseState.evidence.map(e => [e.id, e]));
+        const hypothesisMap = new Map(caseState.hypotheses.map(h => [h.id, h]));
+
+        return nodes.map(node => {
+            let title = '';
+            let description = '';
+            let trustLevel = 'unverified';
+            let trustBadge = '🟡';
+            let confidence = 'medium';
+            let supportingCount = 0;
+
+            if (node.type === 'evidence') {
+                const evidence = evidenceMap.get(node.dataId);
+                title = evidence?.description || `Evidence ${node.id.slice(0, 8)}`;
+                description = evidence?.content || evidence?.description || 'No content';
+                trustLevel = evidence?.trustLevel || 'unverified';
+                const badges: Record<string, string> = {
+                    'unverified': '🟡',
+                    'verified': '🟢',
+                    'disputed': '🔴',
+                    'disproven': '⚫',
+                };
+                trustBadge = badges[trustLevel] || '🟡';
+            } else if (node.type === 'hypothesis') {
+                const hypothesis = hypothesisMap.get(node.dataId);
+                title = hypothesis?.title || hypothesis?.description?.substring(0, 30) || `Hypothesis ${node.id.slice(0, 8)}`;
+                description = hypothesis?.description || 'No description';
+                confidence = hypothesis?.confidence || 'medium';
+                supportingCount = hypothesis?.supportingEvidenceIds?.length || 0;
+            }
+
+            return {
+                ...node,
+                ui: {
+                    title,
+                    description,
+                    trustLevel,
+                    trustBadge,
+                    confidence,
+                    supportingCount
+                }
+            };
+        });
+    });
+
     /** Connections for the current case */
     readonly connections = computed(() => this.boardState().connections);
+
+    /** Optimized UI connections with pre-computed display properties */
+    readonly uiConnections = computed(() => {
+        const connections = this.connections();
+        const caseState = this.currentCase();
+        if (!caseState) return [];
+
+        // Use a map for O(1) lookup of evidence data
+        const evidenceMap = new Map(caseState.evidence.map(e => [e.id, e]));
+        const nodes = this.nodes();
+        const nodeTrustMap = new Map<string, string>();
+
+        nodes.forEach(n => {
+            if (n.type === 'evidence') {
+                const evidence = evidenceMap.get(n.dataId);
+                if (evidence) nodeTrustMap.set(n.id, evidence.trustLevel);
+            }
+        });
+
+        return connections.map(conn => {
+            const srcTrust = nodeTrustMap.get(conn.sourceNodeId) || 'unverified';
+            const tgtTrust = nodeTrustMap.get(conn.targetNodeId) || 'unverified';
+
+            let trustClass = '';
+            if (srcTrust === 'disproven' || tgtTrust === 'disproven') trustClass = 'yarn-disproven';
+            else if (srcTrust === 'disputed' || tgtTrust === 'disputed') trustClass = 'yarn-disputed';
+
+            const midpoint = conn.path.length >= 2
+                ? conn.path[Math.floor(conn.path.length / 2)]
+                : { x: 0, y: 0 };
+
+            return {
+                ...conn,
+                ui: {
+                    trustClass,
+                    midpoint,
+                    pathD: this.calculateConnectionPathD(conn.path)
+                }
+            };
+        });
+    });
 
     /** Selected node */
     readonly selectedNode = computed(() => {
@@ -133,8 +228,8 @@ export class BoardStore {
                 return node;
             });
 
-            // Update connection paths
-            const connections = this.updateConnectionPaths(state.connections, nodes, state.tools.connectionStyle);
+            // Update connection paths (optimized to only update paths for the moved node)
+            const connections = this.updateConnectionPaths(state.connections, nodes, state.tools.connectionStyle, nodeId);
 
             return {
                 ...state,
@@ -485,11 +580,17 @@ export class BoardStore {
     private updateConnectionPaths(
         connections: BoardConnection[],
         nodes: BoardNode[],
-        style: 'straight' | 'bezier' | 'orthogonal'
+        style: 'straight' | 'bezier' | 'orthogonal',
+        movedNodeId?: string
     ): BoardConnection[] {
         const nodeMap = new Map(nodes.map(n => [n.id, n]));
 
         return connections.map(conn => {
+            // Optimization: Only recalculate paths for connections attached to the moved node
+            if (movedNodeId && conn.sourceNodeId !== movedNodeId && conn.targetNodeId !== movedNodeId) {
+                return conn;
+            }
+
             const sourceNode = nodeMap.get(conn.sourceNodeId);
             const targetNode = nodeMap.get(conn.targetNodeId);
 
@@ -503,6 +604,27 @@ export class BoardStore {
 
             return { ...conn, path };
         });
+    }
+
+    private calculateConnectionPathD(path: { x: number; y: number }[]): string {
+        if (path.length < 2) return '';
+
+        const [start, ...rest] = path;
+        let d = `M ${start.x} ${start.y}`;
+
+        if (path.length === 2) {
+            const end = path[1];
+            d += ` L ${end.x} ${end.y}`;
+        } else if (path.length === 4) {
+            const [c1, c2, end] = rest;
+            d += ` C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${end.x} ${end.y}`;
+        } else {
+            rest.forEach(point => {
+                d += ` L ${point.x} ${point.y}`;
+            });
+        }
+
+        return d;
     }
 
     /** Find node at position */

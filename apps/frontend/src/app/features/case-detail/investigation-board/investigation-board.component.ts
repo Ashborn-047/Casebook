@@ -34,7 +34,9 @@ export class InvestigationBoardComponent implements OnInit, AfterViewInit {
 
     // Board state
     nodes = this.boardStore.nodes;
+    uiNodes = this.boardStore.uiNodes;
     connections = this.boardStore.connections;
+    uiConnections = this.boardStore.uiConnections;
     viewport = this.boardStore.viewport;
     mode = this.boardStore.mode;
     tools = this.boardStore.tools;
@@ -43,21 +45,23 @@ export class InvestigationBoardComponent implements OnInit, AfterViewInit {
     @ViewChild('pathCreator') pathCreator!: PathCreatorComponent;
     isPathPanelOpen = signal(false);
 
-    // Computed
+    // Computed (using pre-optimized UI models)
     evidenceNodes = computed(() =>
-        this.nodes().filter(node => node.type === 'evidence')
+        this.uiNodes().filter(node => node.type === 'evidence')
     );
 
     hypothesisNodes = computed(() =>
-        this.nodes().filter(node => node.type === 'hypothesis')
+        this.uiNodes().filter(node => node.type === 'hypothesis')
     );
 
     gridSize = computed(() => this.tools().gridSize);
 
-    // Interaction state
-    isDragging = false;
-    isPanning = false;
-    isDrawingConnection = false;
+    // Interaction state (as signals for performance-aware rendering)
+    isDragging = signal(false);
+    isPanning = signal(false);
+    isDrawingConnection = signal(false);
+
+    isInteracting = computed(() => this.isDragging() || this.isPanning());
 
     dragStart = { x: 0, y: 0 };
     panStart = { x: 0, y: 0 };
@@ -114,16 +118,18 @@ export class InvestigationBoardComponent implements OnInit, AfterViewInit {
                     this.pendingSourceNodeId = this.connectionSource;
                     this.pendingTargetNodeId = targetNode.id;
 
-                    const srcNode = this.nodes().find(n => n.id === this.connectionSource);
+                    const srcNode = this.uiNodes().find(n => n.id === this.connectionSource);
+                    const uiTargetNode = this.uiNodes().find(n => n.id === targetNode.id);
+
                     this.pendingSourceLabel.set(srcNode ? this.getNodeTitle(srcNode) : 'Evidence A');
-                    this.pendingTargetLabel.set(this.getNodeTitle(targetNode));
+                    this.pendingTargetLabel.set(uiTargetNode ? this.getNodeTitle(uiTargetNode) : 'Evidence B');
 
                     // Find shared tokens for suggestion chips
                     this.pendingSuggestedTokens.set(this.findSharedTokens(this.connectionSource, targetNode.id));
 
                     this.showConnectionModal.set(true);
                 }
-                this.isDrawingConnection = false;
+                this.isDrawingConnection.set(false);
                 this.connectionSource = null;
                 this.tempConnection.set(null);
             } else if (this.mode() === 'select') {
@@ -141,27 +147,27 @@ export class InvestigationBoardComponent implements OnInit, AfterViewInit {
     onBoardMouseMove(event: MouseEvent): void {
         const boardPos = this.getBoardPosition(event.clientX, event.clientY);
 
-        if (this.isPanning) {
+        if (this.isPanning()) {
             const deltaX = event.clientX - this.panStart.x;
             const deltaY = event.clientY - this.panStart.y;
             this.boardStore.pan(deltaX, deltaY);
             this.panStart = { x: event.clientX, y: event.clientY };
-        } else if (this.isDragging && this.dragNodeId) {
+        } else if (this.isDragging() && this.dragNodeId) {
             const newX = boardPos.x - this.dragStart.x;
             const newY = boardPos.y - this.dragStart.y;
             this.boardStore.moveNode(this.dragNodeId, { x: newX, y: newY });
-        } else if (this.isDrawingConnection && this.tempConnection()) {
+        } else if (this.isDrawingConnection() && this.tempConnection()) {
             this.tempConnection.update(tc => tc ? { ...tc, targetPos: boardPos } : null);
         }
     }
 
     onBoardMouseUp(event: MouseEvent): void {
-        if (this.isDragging && this.dragNodeId) {
+        if (this.isDragging() && this.dragNodeId) {
             this.boardStore.finishDragging(this.dragNodeId);
         }
 
-        this.isDragging = false;
-        this.isPanning = false;
+        this.isDragging.set(false);
+        this.isPanning.set(false);
         this.dragNodeId = null;
     }
 
@@ -186,7 +192,7 @@ export class InvestigationBoardComponent implements OnInit, AfterViewInit {
                         x: boardPos.x - node.position.x,
                         y: boardPos.y - node.position.y
                     };
-                    this.isDragging = true;
+                    this.isDragging.set(true);
                     this.dragNodeId = nodeId;
                 }
             }
@@ -196,11 +202,11 @@ export class InvestigationBoardComponent implements OnInit, AfterViewInit {
                     this.boardStore.createConnection(this.connectionSource, nodeId);
                 }
                 this.connectionSource = null;
-                this.isDrawingConnection = false;
+                this.isDrawingConnection.set(false);
                 this.tempConnection.set(null);
             } else {
                 this.connectionSource = nodeId;
-                this.isDrawingConnection = true;
+                this.isDrawingConnection.set(true);
                 const boardPos = this.getBoardPosition(event.clientX, event.clientY);
                 this.tempConnection.set({
                     sourceId: nodeId,
@@ -231,7 +237,7 @@ export class InvestigationBoardComponent implements OnInit, AfterViewInit {
     }
 
     private startPanning(clientX: number, clientY: number): void {
-        this.isPanning = true;
+        this.isPanning.set(true);
         this.panStart = { x: clientX, y: clientY };
     }
 
@@ -252,89 +258,8 @@ export class InvestigationBoardComponent implements OnInit, AfterViewInit {
         return base + selected;
     }
 
-    getNodeTitle(node: BoardNode): string {
-        const data = this.getNodeData(node);
-        if (!data) return `Node ${node.id.slice(0, 8)}`;
-
-        if (node.type === 'evidence') {
-            return (data['description'] as string) || `Evidence ${node.id.slice(0, 8)}`;
-        }
-
-        const title = data['title'] as string | undefined;
-        const description = data['description'] as string | undefined;
-        return title || description?.substring(0, 30) || `Node ${node.id.slice(0, 8)}`;
-    }
-
-    getNodeDescription(node: BoardNode): string {
-        const data = this.getNodeData(node);
-        if (!data) return 'No description';
-
-        if (node.type === 'evidence') {
-            return (data['content'] as string) || (data['description'] as string) || 'No content';
-        }
-
-        const description = data['description'] as string | undefined;
-        return description || 'No description';
-    }
-
-    getHypothesisConfidence(node: BoardNode): string {
-        const data = this.getNodeData(node);
-        if (!data) return 'medium';
-        return (data['confidence'] as string) || 'medium';
-    }
-
-    getHypothesisConfidenceClass(node: BoardNode): string {
-        const confidence = this.getHypothesisConfidence(node);
-        switch (confidence) {
-            case 'high': return 'bg-red-100 text-red-800';
-            case 'medium': return 'bg-yellow-100 text-yellow-800';
-            case 'low': return 'bg-green-100 text-green-800';
-            default: return 'bg-gray-100 text-gray-800';
-        }
-    }
-
-    getSupportingEvidenceCount(node: BoardNode): number {
-        const data = this.getNodeData(node);
-        if (!data) return 0;
-        const supporting = data['supportingEvidenceIds'] as string[] | undefined;
-        return supporting?.length || 0;
-    }
-
-    getNodeData(node: BoardNode): Record<string, unknown> | null {
-        const caseState = this.caseStore.currentCase();
-        if (!caseState) return null;
-
-        switch (node.type) {
-            case 'evidence':
-                return caseState.evidence.find(e => e.id === node.dataId) as unknown as Record<string, unknown> || null;
-            case 'hypothesis':
-                return caseState.hypotheses.find(h => h.id === node.dataId) as unknown as Record<string, unknown> || null;
-            default:
-                return null;
-        }
-    }
-
-    getConnectionPathD(connection: BoardConnection): string {
-        if (connection.path.length >= 2) {
-            const [start, ...rest] = connection.path;
-            let d = `M ${start.x} ${start.y}`;
-
-            if (connection.path.length === 2) {
-                const end = connection.path[1];
-                d += ` L ${end.x} ${end.y}`;
-            } else if (connection.path.length === 4) {
-                const [c1, c2, end] = rest;
-                d += ` C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${end.x} ${end.y}`;
-            } else {
-                rest.forEach(point => {
-                    d += ` L ${point.x} ${point.y}`;
-                });
-            }
-
-            return d;
-        }
-
-        return '';
+    getNodeTitle(node: any): string {
+        return node.ui?.title || `Node ${node.id.slice(0, 8)}`;
     }
 
     getTempConnectionPathD(): string {
@@ -351,15 +276,6 @@ export class InvestigationBoardComponent implements OnInit, AfterViewInit {
         const end = tc.targetPos;
 
         return `M ${start.x} ${start.y} L ${end.x} ${end.y}`;
-    }
-
-    getConnectionMidpoint(connection: BoardConnection): { x: number; y: number } {
-        if (connection.path.length >= 2) {
-            const midIndex = Math.floor(connection.path.length / 2);
-            return connection.path[midIndex];
-        }
-
-        return { x: 0, y: 0 };
     }
 
     // === KEYBOARD SHORTCUTS ===
@@ -405,7 +321,7 @@ export class InvestigationBoardComponent implements OnInit, AfterViewInit {
             case 'Escape':
                 this.boardStore.selectNode(null);
                 this.boardStore.setMode('select');
-                this.isDrawingConnection = false;
+                this.isDrawingConnection.set(false);
                 this.connectionSource = null;
                 this.tempConnection.set(null);
                 this.showConnectionModal.set(false);
@@ -479,12 +395,11 @@ export class InvestigationBoardComponent implements OnInit, AfterViewInit {
         }
 
         event.stopPropagation();
-        const connection = this.connections().find(c => c.id === connectionId);
+        const connection = this.uiConnections().find(c => c.id === connectionId);
         if (!connection) return;
 
-        const midpoint = this.getConnectionMidpoint(connection);
         this.inspectedConnection.set(connection);
-        this.yarnInspectorPos.set(midpoint);
+        this.yarnInspectorPos.set(connection.ui.midpoint);
         this.showYarnInspector.set(true);
     }
 
@@ -501,49 +416,4 @@ export class InvestigationBoardComponent implements OnInit, AfterViewInit {
         this.onYarnInspectorClose();
     }
 
-    // === TRUST LEVEL HELPERS ===
-
-    getEvidenceTrustBadge(node: BoardNode): string {
-        const caseState = this.caseStore.currentCase();
-        if (!caseState) return '🟡';
-
-        const evidence = caseState.evidence.find(e => e.id === node.dataId);
-        if (!evidence) return '🟡';
-
-        const badges: Record<string, string> = {
-            'unverified': '🟡',
-            'verified': '🟢',
-            'disputed': '🔴',
-            'disproven': '⚫',
-        };
-
-        return badges[evidence.trustLevel] || '🟡';
-    }
-
-    getEvidenceTrustLevel(node: BoardNode): string {
-        const caseState = this.caseStore.currentCase();
-        if (!caseState) return 'unverified';
-        const evidence = caseState.evidence.find(e => e.id === node.dataId);
-        return evidence?.trustLevel || 'unverified';
-    }
-
-    /** Get connection visual class based on linked evidence trust levels */
-    getConnectionTrustClass(connection: BoardConnection): string {
-        const caseState = this.caseStore.currentCase();
-        if (!caseState) return '';
-
-        const srcNode = this.nodes().find(n => n.id === connection.sourceNodeId);
-        const tgtNode = this.nodes().find(n => n.id === connection.targetNodeId);
-        if (!srcNode || !tgtNode) return '';
-
-        const srcEvidence = caseState.evidence.find(e => e.id === srcNode.dataId);
-        const tgtEvidence = caseState.evidence.find(e => e.id === tgtNode.dataId);
-
-        const srcTrust = srcEvidence?.trustLevel || 'unverified';
-        const tgtTrust = tgtEvidence?.trustLevel || 'unverified';
-
-        if (srcTrust === 'disproven' || tgtTrust === 'disproven') return 'yarn-disproven';
-        if (srcTrust === 'disputed' || tgtTrust === 'disputed') return 'yarn-disputed';
-        return '';
-    }
 }

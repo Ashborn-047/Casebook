@@ -15,6 +15,29 @@
   overflow: hidden;
   background-image: radial-gradient(circle, #2d2d44 1px, transparent 1px);
   background-size: 30px 30px;
+
+  /* Optimize performance during interaction */
+  &.is-interacting {
+    .connection-path {
+      filter: none !important;
+      animation: none !important;
+    }
+
+    .board-node {
+      transition: none !important;
+      animation: none !important;
+
+      &.evidence.trust-disputed {
+        animation: none !important;
+      }
+    }
+
+    /* Hide expensive previews during interaction */
+    .polaroid-preview,
+    .hypothesis-preview {
+      display: none !important;
+    }
+  }
 }
 
 /* ===== NODES ===== */

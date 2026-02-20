@@ -154,14 +154,14 @@ import { getSeverityColor } from '../../shared/utils/contrast.util';
                   @for (entry of timeline(); track entry.id) {
                     <div class="timeline-item">
                       <div class="timeline-icon">
-                        {{ getEventIcon(entry.type) }}
+                        {{ entry.icon }}
                       </div>
                       <div class="brutal-card" style="margin-bottom: 0;"
-                        [style.background]="getEventCardColor(entry.type)">
+                        [style.background]="entry.colorClass">
                         <!-- Chain of Custody Sticker -->
                         @if (entry.actorId) {
                           <span class="sticker">
-                            {{ entry.actorId | uppercase | slice:0:3 }} &bull; {{ formatTimestamp(entry.occurredAt) }}
+                            {{ entry.actorId | uppercase | slice:0:3 }} &bull; {{ entry.formattedTime }}
                           </span>
                         }
                         <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
@@ -664,28 +664,6 @@ export class CaseDetailContainerComponent {
   get pathsCount(): number { return this.currentCase()?.investigationPaths?.length || 0; }
 
 
-  getEventIcon(type: string): string {
-    if (type.includes('EVIDENCE')) return '💾';
-    if (type.includes('HYPOTHESIS')) return '🧠';
-    if (type.includes('NOTE')) return '📝';
-    if (type.includes('CONNECTION')) return '🔗';
-    if (type.includes('CASE')) return '📁';
-    return '📌';
-  }
-
-  getEventCardColor(type: string): string {
-    if (type.includes('HYPOTHESIS')) return 'var(--yellow)';
-    if (type.includes('NOTE')) return 'var(--blue)';
-    if (type.includes('EVIDENCE')) return 'white';
-    if (type.includes('CONNECTION')) return 'var(--lavender)';
-    return 'white';
-  }
-
-  formatTimestamp(iso: string): string {
-    if (!iso) return '';
-    const d = new Date(iso);
-    return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-  }
 
   setViewMode(mode: 'timeline' | 'board'): void {
     this.viewMode.set(mode);

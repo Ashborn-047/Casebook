@@ -198,6 +198,7 @@ export interface TimelineEntry {
     readonly occurredAt: string;
     readonly icon: string;
     readonly colorClass: string;
+    readonly formattedTime?: string;
     readonly payload: Record<string, unknown>;
     readonly isVisibleTo: UserRole[];
     readonly metadata?: {

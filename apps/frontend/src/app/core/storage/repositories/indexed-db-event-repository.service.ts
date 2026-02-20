@@ -15,7 +15,7 @@ export class IndexedDBEventRepository implements IEventRepository {
     private db: IDBDatabase | null = null;
     private initialized = false;
     private readonly DB_NAME = 'casbook-events';
-    private readonly DB_VERSION = 2;
+    private readonly DB_VERSION = 3;
 
     async initialize(): Promise<void> {
         if (this.initialized) return;
@@ -76,21 +76,28 @@ export class IndexedDBEventRepository implements IEventRepository {
         return new Promise((resolve, reject) => {
             const transaction = this.db!.transaction(['events'], 'readonly');
             const store = transaction.objectStore('events');
-            const index = store.index('occurredAt');
-            const request = index.getAll();
 
-            request.onsuccess = () => {
-                let events: AppEvent[] = request.result;
-                if (caseId) {
-                    events = events.filter(event =>
-                        'caseId' in event.payload && (event.payload as { caseId: string }).caseId === caseId
-                    );
-                }
-                // Using 'occurredAt' index ensures events are already sorted chronologically
-                // removing the need for an O(N log N) manual sort in JavaScript.
-                resolve(events);
-            };
-            request.onerror = () => reject(new Error(`Failed to get events: ${request.error}`));
+            if (caseId) {
+                // Use the caseId index for efficient filtering at the database level
+                const index = store.index('caseId');
+                const request = index.getAll(caseId);
+
+                request.onsuccess = () => {
+                    const events: AppEvent[] = request.result;
+                    // When using caseId index, we must sort manually as we lost the occurredAt order
+                    // but we are only sorting events for a single case, which is much faster.
+                    events.sort((a, b) => a.occurredAt.localeCompare(b.occurredAt));
+                    resolve(events);
+                };
+                request.onerror = () => reject(new Error(`Failed to get events for case ${caseId}: ${request.error}`));
+            } else {
+                // Use occurredAt index for global chronological retrieval
+                const index = store.index('occurredAt');
+                const request = index.getAll();
+
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(new Error(`Failed to get all events: ${request.error}`));
+            }
         });
     }
 
@@ -120,14 +127,27 @@ export class IndexedDBEventRepository implements IEventRepository {
     }
 
     async getCaseIds(): Promise<string[]> {
-        const events = await this.getEvents();
-        const caseIds = new Set<string>();
-        events.forEach(event => {
-            if ('caseId' in event.payload) {
-                caseIds.add((event.payload as { caseId: string }).caseId);
-            }
+        if (!this.db) throw new Error('Database not initialized');
+
+        return new Promise((resolve, reject) => {
+            const transaction = this.db!.transaction(['events'], 'readonly');
+            const store = transaction.objectStore('events');
+            const index = store.index('caseId');
+            const caseIds = new Set<string>();
+
+            // Use a key cursor to iterate over unique caseIds in the index
+            const request = index.openKeyCursor();
+            request.onsuccess = (event) => {
+                const cursor = (event.target as IDBRequest<IDBCursor>).result;
+                if (cursor) {
+                    caseIds.add(cursor.key as string);
+                    cursor.continue();
+                } else {
+                    resolve(Array.from(caseIds));
+                }
+            };
+            request.onerror = () => reject(new Error(`Failed to get case IDs: ${request.error}`));
         });
-        return Array.from(caseIds);
     }
 
     async getCaseState(caseId: string): Promise<CaseState | null> {
@@ -148,8 +168,23 @@ export class IndexedDBEventRepository implements IEventRepository {
     }
 
     async getEventCount(caseId?: string): Promise<number> {
-        const events = await this.getEvents(caseId);
-        return events.length;
+        if (!this.db) throw new Error('Database not initialized');
+
+        return new Promise((resolve, reject) => {
+            const transaction = this.db!.transaction(['events'], 'readonly');
+            const store = transaction.objectStore('events');
+            let request: IDBRequest<number>;
+
+            if (caseId) {
+                const index = store.index('caseId');
+                request = index.count(caseId);
+            } else {
+                request = store.count();
+            }
+
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(new Error(`Failed to count events: ${request.error}`));
+        });
     }
 
     async getCaseCount(): Promise<number> {
@@ -240,6 +275,16 @@ export class IndexedDBEventRepository implements IEventRepository {
                     const eventsStore = tx.objectStore('events');
                     eventsStore.clear();
                     console.log('Cleared old demo data during v1→v2 upgrade');
+                }
+
+                // v2→v3: Add caseId index for optimized case-specific queries
+                if (oldVersion < 3) {
+                    const tx = (event.target as IDBOpenDBRequest).transaction!;
+                    const eventsStore = tx.objectStore('events');
+                    if (!eventsStore.indexNames.contains('caseId')) {
+                        eventsStore.createIndex('caseId', 'payload.caseId', { unique: false });
+                        console.log('Migration v3: Added caseId index to events store');
+                    }
                 }
             };
         });

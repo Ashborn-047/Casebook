@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { AppEvent, CaseState } from '@casbook/shared-models';
+import { AppEvent } from '@casbook/shared-models';
 import { reduceEvents } from '@casbook/shared-logic';
 import { ExportOptions, ExportResult } from './export.types';
 

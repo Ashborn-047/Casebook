@@ -2,8 +2,11 @@
   "name": "@casbook/shared-utils",
   "version": "0.0.1",
   "peerDependencies": {
-    "@angular/common": "^21.1.0",
-    "@angular/core": "^21.1.0"
+    "@angular/core": "^21.1.0",
+    "@casbook/shared-logic": "0.0.1",
+    "@casbook/shared-models": "0.0.1",
+    "jspdf": "^4.1.0",
+    "vitest": "^4.0.8"
   },
   "sideEffects": false
 }

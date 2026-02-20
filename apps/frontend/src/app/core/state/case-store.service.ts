@@ -170,7 +170,7 @@ export class CaseStore {
             // Perform initial grouping and reduction (done once)
             const grouped: Record<string, AppEvent[]> = {};
             events.forEach(event => {
-                const caseId = (event.payload as any).caseId;
+                const caseId = 'caseId' in event.payload ? (event.payload as { caseId: string }).caseId : undefined;
                 if (caseId) {
                     if (!grouped[caseId]) grouped[caseId] = [];
                     grouped[caseId].push(event);
@@ -220,7 +220,7 @@ export class CaseStore {
             this.events.update(events => [...events, fullEvent]);
 
             // Incremental update of case-specific signals
-            const caseId = (fullEvent.payload as any).caseId;
+            const caseId = 'caseId' in fullEvent.payload ? (fullEvent.payload as { caseId: string }).caseId : undefined;
             if (caseId) {
                 this.eventsByCase.update(map => ({
                     ...map,
@@ -253,7 +253,7 @@ export class CaseStore {
 
             const grouped: Record<string, AppEvent[]> = {};
             events.forEach(event => {
-                const caseId = (event.payload as any).caseId;
+                const caseId = 'caseId' in event.payload ? (event.payload as { caseId: string }).caseId : undefined;
                 if (caseId) {
                     if (!grouped[caseId]) grouped[caseId] = [];
                     grouped[caseId].push(event);

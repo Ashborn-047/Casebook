@@ -12,9 +12,7 @@ import {
     AppEvent,
     ConnectionType,
     ConnectionStrength,
-    EvidenceTrustLevel,
-    Evidence,
-    Hypothesis
+    EvidenceTrustLevel
 } from '@casbook/shared-models';
 import { createInitialBoardState } from '@casbook/shared-logic';
 

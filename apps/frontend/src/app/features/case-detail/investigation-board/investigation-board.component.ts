@@ -13,7 +13,7 @@ import { CommonModule } from '@angular/common';
 import { BoardStore } from '../../../core/state/board-store.service';
 import { CaseStore } from '../../../core/state/case-store.service';
 import { MindPalaceService } from '../../../core/services/mind-palace.service';
-import { BoardNode, BoardConnection, ConnectionType, ConnectionStrength } from '@casbook/shared-models';
+import { BoardNode, BoardConnection } from '@casbook/shared-models';
 import { PathCreatorComponent } from './path-creator/path-creator.component';
 import { ConnectionModalComponent, ConnectionFormData } from './connection-modal/connection-modal.component';
 import { YarnInspectorComponent } from './yarn-inspector/yarn-inspector.component';
@@ -161,7 +161,7 @@ export class InvestigationBoardComponent implements OnInit, AfterViewInit {
         }
     }
 
-    onBoardMouseUp(event: MouseEvent): void {
+    onBoardMouseUp(): void {
         if (this.isDragging() && this.dragNodeId) {
             this.boardStore.finishDragging(this.dragNodeId);
         }
@@ -258,7 +258,7 @@ export class InvestigationBoardComponent implements OnInit, AfterViewInit {
         return base + selected;
     }
 
-    getNodeTitle(node: any): string {
+    getNodeTitle(node: BoardNode): string {
         return node.ui?.title || `Node ${node.id.slice(0, 8)}`;
     }
 

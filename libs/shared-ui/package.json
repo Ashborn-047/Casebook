@@ -4,7 +4,7 @@
   "peerDependencies": {
     "@angular/common": "^21.1.0",
     "@angular/core": "^21.1.0",
-    "@casbook/shared-models": "0.0.0",
+    "@casbook/shared-models": "0.0.1",
     "vitest": "^4.0.8"
   },
   "sideEffects": false

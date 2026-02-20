@@ -1,6 +1,6 @@
 <!-- Board Container -->
 <div #boardContainer class="board-container" [class.is-interacting]="isInteracting()"
-  (mousedown)="onBoardMouseDown($event)" (mousemove)="onBoardMouseMove($event)" (mouseup)="onBoardMouseUp($event)" (wheel)="onBoardWheel($event)">
+  (mousedown)="onBoardMouseDown($event)" (mousemove)="onBoardMouseMove($event)" (mouseup)="onBoardMouseUp()" (wheel)="onBoardWheel($event)">
   <!-- Grid Background -->
   @if (tools().isGridVisible) {
   <div class="board-grid" [style.background-size]="gridSize() + 'px ' + gridSize() + 'px'"

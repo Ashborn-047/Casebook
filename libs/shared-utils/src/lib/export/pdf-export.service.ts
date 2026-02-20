@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { jsPDF } from 'jspdf';
-import { AppEvent, CaseState } from '@casbook/shared-models';
+import { AppEvent } from '@casbook/shared-models';
 import { reduceEvents } from '@casbook/shared-logic';
 import { ExportOptions, ExportResult } from './export.types';
 
@@ -91,7 +91,7 @@ export class PdfExportService {
             doc.line(margin, y, pageWidth - margin, y);
 
             doc.setFont('helvetica', 'normal');
-            sortedEvents.forEach((event, index) => {
+            sortedEvents.forEach((event) => {
                 y += 8;
 
                 // Add new page if needed

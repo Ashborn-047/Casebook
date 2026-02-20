@@ -24,6 +24,14 @@ export interface BoardNode {
         createdAt: string;
         lastUpdated: string;
     };
+    readonly ui?: {
+        title: string;
+        description: string;
+        trustLevel: string;
+        trustBadge: string;
+        confidence: string;
+        supportingCount: number;
+    };
 }
 
 export interface BoardConnection {
@@ -39,6 +47,11 @@ export interface BoardConnection {
         lineStyle: 'solid' | 'dashed' | 'dotted';
         label?: string;
         isActive: boolean;
+    };
+    readonly ui?: {
+        trustClass: string;
+        midpoint: { x: number; y: number };
+        pathD: string;
     };
 }
 

@@ -160,6 +160,12 @@ export class CaseStore {
         });
     }
 
+    /** Extract caseId from an event payload in a type-safe way */
+    private getCaseIdFromEvent(event: AppEvent): string | undefined {
+        const payload = event.payload as unknown as Record<string, unknown>;
+        return typeof payload['caseId'] === 'string' ? payload['caseId'] : undefined;
+    }
+
     private async initializeStore(): Promise<void> {
         try {
             this.uiState.update(ui => ({ ...ui, isLoading: true, error: null }));
@@ -170,7 +176,7 @@ export class CaseStore {
             // Perform initial grouping and reduction (done once)
             const grouped: Record<string, AppEvent[]> = {};
             events.forEach(event => {
-                const caseId = 'caseId' in event.payload ? (event.payload as { caseId: string }).caseId : undefined;
+                const caseId = this.getCaseIdFromEvent(event);
                 if (caseId) {
                     if (!grouped[caseId]) grouped[caseId] = [];
                     grouped[caseId].push(event);
@@ -220,7 +226,7 @@ export class CaseStore {
             this.events.update(events => [...events, fullEvent]);
 
             // Incremental update of case-specific signals
-            const caseId = 'caseId' in fullEvent.payload ? (fullEvent.payload as { caseId: string }).caseId : undefined;
+            const caseId = this.getCaseIdFromEvent(fullEvent);
             if (caseId) {
                 this.eventsByCase.update(map => ({
                     ...map,
@@ -253,7 +259,7 @@ export class CaseStore {
 
             const grouped: Record<string, AppEvent[]> = {};
             events.forEach(event => {
-                const caseId = 'caseId' in event.payload ? (event.payload as { caseId: string }).caseId : undefined;
+                const caseId = this.getCaseIdFromEvent(event);
                 if (caseId) {
                     if (!grouped[caseId]) grouped[caseId] = [];
                     grouped[caseId].push(event);
@@ -439,25 +445,27 @@ export class CaseStore {
             actorRole: event.actorRole,
             occurredAt: event.occurredAt,
             payload: event.payload as unknown as Record<string, unknown>,
-            formattedTime: new Date(event.occurredAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+            formattedTime: new Date(event.occurredAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
         };
 
         const type = event.type;
 
         // Pre-compute UI-specific icons (emojis for neo-brutalist theme)
+        // NOTE: ORDER MATTERS — check more specific substrings first
+        // e.g. 'CONNECTION' before 'EVIDENCE' so EVIDENCE_CONNECTED gets 🔗 not 💾
         let icon = '📌';
-        if (type.includes('EVIDENCE')) icon = '💾';
+        if (type.includes('CONNECTION')) icon = '🔗';
         else if (type.includes('HYPOTHESIS')) icon = '🧠';
         else if (type.includes('NOTE')) icon = '📝';
-        else if (type.includes('CONNECTION')) icon = '🔗';
+        else if (type.includes('EVIDENCE')) icon = '💾';
         else if (type.includes('CASE')) icon = '📁';
 
         // Pre-compute UI-specific colors (CSS variables from design system)
         let colorClass = 'white';
-        if (type.includes('HYPOTHESIS')) colorClass = 'var(--yellow)';
+        if (type.includes('CONNECTION')) colorClass = 'var(--lavender)';
+        else if (type.includes('HYPOTHESIS')) colorClass = 'var(--yellow)';
         else if (type.includes('NOTE')) colorClass = 'var(--blue)';
         else if (type.includes('EVIDENCE')) colorClass = 'white';
-        else if (type.includes('CONNECTION')) colorClass = 'var(--lavender)';
 
         switch (event.type) {
             case 'CASE_CREATED':

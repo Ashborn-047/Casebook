@@ -41,14 +41,21 @@ export class BoardStore {
     /** Nodes for the current case */
     readonly nodes = computed(() => this.boardState().nodes);
 
+    /** Shared precomputed evidence lookup map (avoids rebuilding in both uiNodes and uiConnections) */
+    private readonly evidenceByIdMap = computed(() => {
+        const caseState = this.currentCase();
+        if (!caseState) return new Map();
+        return new Map(caseState.evidence.map(e => [e.id, e]));
+    });
+
     /** Optimized UI nodes with pre-computed display properties */
     readonly uiNodes = computed(() => {
         const nodes = this.nodes();
         const caseState = this.currentCase();
         if (!caseState) return [];
 
-        // Build lookup maps to avoid O(N*M) complexity in the loop
-        const evidenceMap = new Map(caseState.evidence.map(e => [e.id, e]));
+        // Reuse shared evidence map
+        const evidenceMap = this.evidenceByIdMap();
         const hypothesisMap = new Map(caseState.hypotheses.map(h => [h.id, h]));
 
         return nodes.map(node => {
@@ -102,8 +109,8 @@ export class BoardStore {
         const caseState = this.currentCase();
         if (!caseState) return [];
 
-        // Use a map for O(1) lookup of evidence data
-        const evidenceMap = new Map(caseState.evidence.map(e => [e.id, e]));
+        // Reuse shared evidence map for O(1) lookup
+        const evidenceMap = this.evidenceByIdMap();
         const nodes = this.nodes();
         const nodeTrustMap = new Map<string, string>();
 
@@ -604,6 +611,14 @@ export class BoardStore {
         });
     }
 
+    /**
+     * Converts a path array to an SVG path `d` attribute string.
+     *
+     * Contract with `calculateConnectionPath`:
+     * - 'straight' style  → 2 points  → line (L)
+     * - 'bezier'  style   → 4 points  → cubic curve (C): [start, control1, control2, end]
+     * - 'orthogonal' style→ 6+ points → polyline (L segments)
+     */
     private calculateConnectionPathD(path: { x: number; y: number }[]): string {
         if (path.length < 2) return '';
 
@@ -613,10 +628,14 @@ export class BoardStore {
         if (path.length === 2) {
             const end = path[1];
             d += ` L ${end.x} ${end.y}`;
-        } else if (path.length === 4) {
-            const [c1, c2, end] = rest;
+        } else if (path.length >= 4) {
+            // Cubic bezier: use first two intermediary points as controls, last as end
+            const c1 = rest[0];
+            const c2 = rest[1];
+            const end = rest[rest.length - 1];
             d += ` C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${end.x} ${end.y}`;
         } else {
+            // Fallback: treat as polyline segments
             rest.forEach(point => {
                 d += ` L ${point.x} ${point.y}`;
             });

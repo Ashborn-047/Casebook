@@ -61,7 +61,7 @@ export class InvestigationBoardComponent implements OnInit, AfterViewInit {
     isPanning = signal(false);
     isDrawingConnection = signal(false);
 
-    isInteracting = computed(() => this.isDragging() || this.isPanning());
+    isInteracting = computed(() => this.isDragging() || this.isPanning() || this.isDrawingConnection());
 
     dragStart = { x: 0, y: 0 };
     panStart = { x: 0, y: 0 };
@@ -83,7 +83,7 @@ export class InvestigationBoardComponent implements OnInit, AfterViewInit {
 
     // Yarn Inspector state
     showYarnInspector = signal(false);
-    inspectedConnection = signal<BoardConnection | null>(null);
+    inspectedConnection = signal<(BoardConnection & { ui: NonNullable<BoardConnection['ui']> }) | null>(null);
     yarnInspectorPos = signal({ x: 0, y: 0 });
 
     ngOnInit(): void {
@@ -199,7 +199,15 @@ export class InvestigationBoardComponent implements OnInit, AfterViewInit {
         } else if (this.mode() === 'connect') {
             if (this.connectionSource) {
                 if (this.connectionSource !== nodeId) {
-                    this.boardStore.createConnection(this.connectionSource, nodeId);
+                    // Route through the same "Why?" modal as onBoardMouseDown
+                    this.pendingSourceNodeId = this.connectionSource;
+                    this.pendingTargetNodeId = nodeId;
+                    const srcNode = this.uiNodes().find(n => n.id === this.connectionSource);
+                    const tgtNode = this.uiNodes().find(n => n.id === nodeId);
+                    this.pendingSourceLabel.set(srcNode ? this.getNodeTitle(srcNode) : 'Node A');
+                    this.pendingTargetLabel.set(tgtNode ? this.getNodeTitle(tgtNode) : 'Node B');
+                    this.pendingSuggestedTokens.set(this.findSharedTokens(this.connectionSource, nodeId));
+                    this.showConnectionModal.set(true);
                 }
                 this.connectionSource = null;
                 this.isDrawingConnection.set(false);
@@ -396,9 +404,9 @@ export class InvestigationBoardComponent implements OnInit, AfterViewInit {
 
         event.stopPropagation();
         const connection = this.uiConnections().find(c => c.id === connectionId);
-        if (!connection) return;
+        if (!connection || !connection.ui) return;
 
-        this.inspectedConnection.set(connection);
+        this.inspectedConnection.set(connection as BoardConnection & { ui: NonNullable<BoardConnection['ui']> });
         this.yarnInspectorPos.set(connection.ui.midpoint);
         this.showYarnInspector.set(true);
     }

@@ -135,8 +135,8 @@ export class IndexedDBEventRepository implements IEventRepository {
             const index = store.index('caseId');
             const caseIds = new Set<string>();
 
-            // Use a key cursor to iterate over unique caseIds in the index
-            const request = index.openKeyCursor();
+            // Use 'nextunique' to skip duplicate caseId entries at the IndexedDB level
+            const request = index.openKeyCursor(null, 'nextunique');
             request.onsuccess = (event) => {
                 const cursor = (event.target as IDBRequest<IDBCursor>).result;
                 if (cursor) {
